@@ -1,131 +1,428 @@
-import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, BookOpen, LogIn, Shield } from 'lucide-react';
-import { apiLogin } from '../services/auth';
-import { useNavigate } from 'react-router-dom';
+"use client"
+import React from "react"
+import { useState } from "react"
+import { Mail, Lock, Eye, EyeOff, BookOpen, LogIn, Shield, ArrowLeft } from "lucide-react"
+
+// Mock API functions - replace with your actual API calls
+const apiLogin = async (data) => {
+  // Simulate API call
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // This is where you'd validate credentials against your backend
+      if (data.email === "test@example.com" && data.password === "password") {
+        resolve({ success: true })
+      } else {
+        reject({ response: { data: { message: "Wrong password" } } })
+      }
+    }, 1000)
+  })
+}
+
+const apiResetPassword = async (data) => {
+  // Simulate API call
+  return new Promise((resolve) => {
+    setTimeout(() => resolve({ success: true }), 1000)
+  })
+}
+
+const apiUpdatePassword = async (data) => {
+  // Simulate API call
+  return new Promise((resolve) => {
+    setTimeout(() => resolve({ success: true }), 1000)
+  })
+}
 
 const LoginForm = () => {
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ text: '', type: '' });
-  const navigate = useNavigate();
+  const [form, setForm] = useState({ email: "", password: "" })
+  const [resetForm, setResetForm] = useState({ email: "", newPassword: "", confirmPassword: "" })
+  const [updateForm, setUpdateForm] = useState({ email: "", oldPassword: "", newPassword: "" })
+  const [showPass, setShowPass] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState({ text: "", type: "" })
+  const [activeView, setActiveView] = useState("login") // 'login', 'reset', 'update'
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-  const handleKeyPress = (e) => e.key === 'Enter' && handleLogin();
+  // Common handlers
+  const handleKeyPress = (e) => e.key === "Enter" && handleAction()
+  const resetMessage = () => setMessage({ text: "", type: "" })
+
+  // Login handlers
+  const handleLoginChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+
+  // Reset password handlers
+  const handleResetChange = (e) => setResetForm({ ...resetForm, [e.target.name]: e.target.value })
+
+  // Update password handlers
+  const handleUpdateChange = (e) => setUpdateForm({ ...updateForm, [e.target.name]: e.target.value })
+
+  const validatePassword = (password) => {
+    if (password.length < 6) {
+      setMessage({ text: "Password must be at least 6 characters", type: "error" })
+      return false
+    }
+    return true
+  }
+
+  const handleAction = async () => {
+    resetMessage()
+
+    if (activeView === "login") {
+      await handleLogin()
+    } else if (activeView === "reset") {
+      await handleResetPassword()
+    } else if (activeView === "update") {
+      await handleUpdatePassword()
+    }
+  }
 
   const handleLogin = async () => {
     if (!form.email || !form.password) {
-      setMessage({ text: 'Please fill in all fields', type: 'error' });
-      return;
+      setMessage({ text: "Please fill in all fields", type: "error" })
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
     try {
-      await apiLogin(form);
-      setMessage({ text: 'Login successful! Redirecting...', type: 'success' });
-      setTimeout(() => navigate('/dashboard'), 1500);
+      await apiLogin(form)
+      setMessage({ text: "Login successful! Redirecting...", type: "success" })
+      // Replace with your navigation logic
+      setTimeout(() => {
+        // window.location.href = "/dashboard" // Simple redirect
+        // Or if using React Router: navigate('/dashboard')
+        console.log("Redirecting to dashboard...")
+      }, 1500)
     } catch (error) {
-      setMessage({ 
-        text: error.response?.data?.message || 'Login failed', 
-        type: 'error' 
-      });
+      setMessage({
+        text: error.response?.data?.message || "Wrong password", // Changed from 'Login failed' to 'Wrong password'
+        type: "error",
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const handleResetPassword = async () => {
+    if (!resetForm.email || !resetForm.newPassword || !resetForm.confirmPassword) {
+      setMessage({ text: "Please fill in all fields", type: "error" })
+      return
+    }
+
+    if (resetForm.newPassword !== resetForm.confirmPassword) {
+      setMessage({ text: "Passwords do not match", type: "error" })
+      return
+    }
+
+    if (!validatePassword(resetForm.newPassword)) return
+
+    setLoading(true)
+    try {
+      await apiResetPassword({ email: resetForm.email, password: resetForm.newPassword })
+      setMessage({ text: "Password reset successfully!", type: "success" })
+      setTimeout(() => setActiveView("login"), 2000)
+    } catch (error) {
+      setMessage({
+        text: error.response?.data?.message || "Password reset failed",
+        type: "error",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUpdatePassword = async () => {
+    if (!updateForm.email || !updateForm.oldPassword || !updateForm.newPassword) {
+      setMessage({ text: "Please fill in all fields", type: "error" })
+      return
+    }
+
+    if (!validatePassword(updateForm.newPassword)) return
+
+    setLoading(true)
+    try {
+      await apiUpdatePassword(updateForm)
+      setMessage({ text: "Password updated successfully!", type: "success" })
+      setTimeout(() => setActiveView("login"), 2000)
+    } catch (error) {
+      setMessage({
+        text: error.response?.data?.message || "Password update failed",
+        type: "error",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRegisterClick = () => {
+    // Replace with your navigation logic
+    // window.location.href = "/register" // Simple redirect
+    // Or if using React Router: navigate('/register')
+    console.log("Navigate to register page...")
+  }
+
+  const renderLoginForm = () => (
+    <>
+      <div className="relative">
+        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleLoginChange}
+          onKeyPress={handleKeyPress}
+          className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-500 focus:outline-none"
+        />
+      </div>
+
+      <div className="relative">
+        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <input
+          type={showPass ? "text" : "password"}
+          name="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleLoginChange}
+          onKeyPress={handleKeyPress}
+          className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-500 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPass(!showPass)}
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-pink-500"
+        >
+          {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+        </button>
+      </div>
+
+      <div className="flex justify-between items-center">
+        <button
+          onClick={() => setActiveView("reset")}
+          className="text-sm text-pink-600 hover:text-blue-600 transition-colors duration-300"
+        >
+          Forgot password?
+        </button>
+        <button
+          onClick={() => setActiveView("update")}
+          className="text-sm text-blue-600 hover:text-pink-600 transition-colors duration-300"
+        >
+          Update password
+        </button>
+      </div>
+    </>
+  )
+
+  const renderResetForm = () => (
+    <>
+      <button
+        onClick={() => setActiveView("login")}
+        className="flex items-center text-sm text-gray-600 hover:text-pink-600 transition-colors duration-300 mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-1" /> Back to login
+      </button>
+
+      <div className="relative">
+        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={resetForm.email}
+          onChange={handleResetChange}
+          onKeyPress={handleKeyPress}
+          className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-500 focus:outline-none"
+        />
+      </div>
+
+      <div className="relative">
+        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <input
+          type={showPass ? "text" : "password"}
+          name="newPassword"
+          placeholder="New Password"
+          value={resetForm.newPassword}
+          onChange={handleResetChange}
+          onKeyPress={handleKeyPress}
+          className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-500 focus:outline-none"
+        />
+      </div>
+
+      <div className="relative">
+        <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <input
+          type={showPass ? "text" : "password"}
+          name="confirmPassword"
+          placeholder="Confirm New Password"
+          value={resetForm.confirmPassword}
+          onChange={handleResetChange}
+          onKeyPress={handleKeyPress}
+          className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-500 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPass(!showPass)}
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-pink-500"
+        >
+          {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+        </button>
+      </div>
+    </>
+  )
+
+  const renderUpdateForm = () => (
+    <>
+      <button
+        onClick={() => setActiveView("login")}
+        className="flex items-center text-sm text-gray-600 hover:text-pink-600 transition-colors duration-300 mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-1" /> Back to login
+      </button>
+
+      <div className="relative">
+        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={updateForm.email}
+          onChange={handleUpdateChange}
+          onKeyPress={handleKeyPress}
+          className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-500 focus:outline-none"
+        />
+      </div>
+
+      <div className="relative">
+        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <input
+          type={showPass ? "text" : "password"}
+          name="oldPassword"
+          placeholder="Current Password"
+          value={updateForm.oldPassword}
+          onChange={handleUpdateChange}
+          onKeyPress={handleKeyPress}
+          className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-500 focus:outline-none"
+        />
+      </div>
+
+      <div className="relative">
+        <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <input
+          type={showPass ? "text" : "password"}
+          name="newPassword"
+          placeholder="New Password"
+          value={updateForm.newPassword}
+          onChange={handleUpdateChange}
+          onKeyPress={handleKeyPress}
+          className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-500 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={() => setShowPass(!showPass)}
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-pink-500"
+        >
+          {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+        </button>
+      </div>
+    </>
+  )
+
+  const getTitle = () => {
+    switch (activeView) {
+      case "reset":
+        return "Reset Password"
+      case "update":
+        return "Update Password"
+      default:
+        return "Welcome Back"
+    }
+  }
+
+  const getSubtitle = () => {
+    switch (activeView) {
+      case "reset":
+        return "Enter your email and new password"
+      case "update":
+        return "Enter your current and new password"
+      default:
+        return "Sign in to continue your journey"
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center p-4">
       <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 w-full max-w-md overflow-hidden">
-        
         {/* Header */}
         <div className="text-center mb-6">
           <div className="mx-auto w-16 h-16 bg-gradient-to-r from-pink-500 to-blue-500 rounded-full mb-3 shadow-lg flex items-center justify-center">
             <BookOpen className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-blue-500 bg-clip-text text-transparent mb-1">
-            Welcome Back
+            {getTitle()}
           </h1>
-          <p className="text-gray-600">Sign in to continue your journey</p>
+          <p className="text-gray-600">{getSubtitle()}</p>
         </div>
 
         {/* Message */}
         {message.text && (
-          <div className={`mb-4 p-3 rounded-lg text-center ${
-            message.type === 'success' 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-pink-100 text-pink-800'
-          }`}>
+          <div
+            className={`mb-4 p-3 rounded-lg text-center ${
+              message.type === "success" ? "bg-green-100 text-green-800" : "bg-pink-100 text-pink-800"
+            }`}
+          >
             {message.text}
           </div>
         )}
 
         {/* Form */}
         <div className="space-y-4">
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={handleChange}
-              onKeyPress={handleKeyPress}
-              className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-500 focus:outline-none"
-            />
-          </div>
-
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type={showPass ? "text" : "password"}
-              name="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              onKeyPress={handleKeyPress}
-              className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-500 focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPass(!showPass)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-pink-500"
-            >
-              {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
-          </div>
+          {activeView === "login" && renderLoginForm()}
+          {activeView === "reset" && renderResetForm()}
+          {activeView === "update" && renderUpdateForm()}
 
           <button
-            onClick={handleLogin}
+            onClick={handleAction}
             disabled={loading}
             className="w-full py-3 bg-gradient-to-r from-pink-500 to-blue-500 text-white rounded-lg hover:from-pink-600 hover:to-blue-600 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                Signing in...
+                {activeView === "login"
+                  ? "Signing in..."
+                  : activeView === "reset"
+                    ? "Resetting password..."
+                    : "Updating password..."}
               </>
             ) : (
               <>
-                <LogIn className="w-5 h-5" />
-                Sign In
+                {activeView === "login" ? (
+                  <>
+                    <LogIn className="w-5 h-5" />
+                    Sign In
+                  </>
+                ) : (
+                  <>
+                    <Shield className="w-5 h-5" />
+                    {activeView === "reset" ? "Reset Password" : "Update Password"}
+                  </>
+                )}
               </>
             )}
           </button>
         </div>
 
-        <div className="mt-6 text-center text-sm text-gray-600">
-          Don't have an account?{' '}
-          <button 
-            onClick={() => navigate('/register')}
-            className="text-pink-600 hover:text-blue-600 transition-colors duration-300 font-semibold"
-          >
-            Create Account
-          </button>
-        </div>
+        {activeView === "login" && (
+          <div className="mt-6 text-center text-sm text-gray-600">
+            Don't have an account?{" "}
+            <button
+              onClick={handleRegisterClick}
+              className="text-pink-600 hover:text-blue-600 transition-colors duration-300 font-semibold"
+            >
+              Create Account
+            </button>
+          </div>
+        )}
       </div>
     </div>
-  );
-};
+  )
+}
 
 export default LoginForm;

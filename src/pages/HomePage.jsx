@@ -5,6 +5,8 @@ import HeroSection from './HeroSection';
 import Features from './Features';
 import AboutPage from './AboutPage';
 import Pricing from './Pricing';
+import ContactForm from './ContactForm';
+import Footer from '../components/Footer';
 
 const HomePage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,6 +26,9 @@ const HomePage = () => {
       <Features />
       <AboutPage/>
       <Pricing setShowSignup={setShowSignup} />
+      <ContactForm />
+              <Footer/>
+
       
       {showSignup && (
         <SignupModal 

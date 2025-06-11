@@ -19,7 +19,7 @@ const Pricing = ({ setShowSignup }) => {
     },
     {
       name: "Monthly Plan",
-      price: "₵29",
+      price: "$19",
       period: "per month",
       features: [
         "Unlimited AI lessons",
@@ -34,7 +34,7 @@ const Pricing = ({ setShowSignup }) => {
     },
     {
       name: "Family Plan",
-      price: "₵79",
+      price: "$49",
       period: "per month",
       features: [
         "Up to 4 children",

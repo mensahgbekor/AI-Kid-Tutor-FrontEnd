@@ -1,8 +1,7 @@
-// components/HeroSection.js
 import React, { useState, useEffect } from 'react';
 import { Play, Brain, Trophy, Star } from 'lucide-react';
 
-const HeroSection = ({ setShowSignup }) => {
+const HeroSection = () => {
   const [floatingElements, setFloatingElements] = useState([]);
 
   useEffect(() => {
@@ -16,6 +15,10 @@ const HeroSection = ({ setShowSignup }) => {
     }));
     setFloatingElements(elements);
   }, []);
+
+  const handleStartFreeTrial = () => {
+    window.location.href = '/register';
+  };
 
   return (
     <section id="home" className="min-h-screen relative overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
@@ -51,7 +54,7 @@ const HeroSection = ({ setShowSignup }) => {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
               <button
-                onClick={() => setShowSignup(true)}
+                onClick={handleStartFreeTrial}
                 className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:shadow-xl transform hover:scale-105 transition-all duration-300"
               >
                 <Play className="w-4 h-4 sm:w-5 sm:h-5 inline-block mr-2" />
