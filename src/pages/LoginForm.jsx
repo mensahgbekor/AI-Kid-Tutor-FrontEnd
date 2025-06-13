@@ -1,38 +1,11 @@
 "use client"
-import React from "react"
-import { useState } from "react"
+import React, { useState } from "react"
 import { Mail, Lock, Eye, EyeOff, BookOpen, LogIn, Shield, ArrowLeft } from "lucide-react"
-
-// Mock API functions - replace with your actual API calls
-const apiLogin = async (data) => {
-  // Simulate API call
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      // This is where you'd validate credentials against your backend
-      if (data.email === "test@example.com" && data.password === "password") {
-        resolve({ success: true })
-      } else {
-        reject({ response: { data: { message: "Wrong password" } } })
-      }
-    }, 1000)
-  })
-}
-
-const apiResetPassword = async (data) => {
-  // Simulate API call
-  return new Promise((resolve) => {
-    setTimeout(() => resolve({ success: true }), 1000)
-  })
-}
-
-const apiUpdatePassword = async (data) => {
-  // Simulate API call
-  return new Promise((resolve) => {
-    setTimeout(() => resolve({ success: true }), 1000)
-  })
-}
+// import { apiUpdatePassword } from "../services/auth"
+import { apiLogin, apiResetPassword, apiUpdatePassword } from "../services/auth"
 
 const LoginForm = () => {
+  // State management
   const [form, setForm] = useState({ email: "", password: "" })
   const [resetForm, setResetForm] = useState({ email: "", newPassword: "", confirmPassword: "" })
   const [updateForm, setUpdateForm] = useState({ email: "", oldPassword: "", newPassword: "" })
@@ -41,19 +14,14 @@ const LoginForm = () => {
   const [message, setMessage] = useState({ text: "", type: "" })
   const [activeView, setActiveView] = useState("login") // 'login', 'reset', 'update'
 
-  // Common handlers
+  // Form handlers
+  const handleLoginChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+  const handleResetChange = (e) => setResetForm({ ...resetForm, [e.target.name]: e.target.value })
+  const handleUpdateChange = (e) => setUpdateForm({ ...updateForm, [e.target.name]: e.target.value })
   const handleKeyPress = (e) => e.key === "Enter" && handleAction()
   const resetMessage = () => setMessage({ text: "", type: "" })
 
-  // Login handlers
-  const handleLoginChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
-
-  // Reset password handlers
-  const handleResetChange = (e) => setResetForm({ ...resetForm, [e.target.name]: e.target.value })
-
-  // Update password handlers
-  const handleUpdateChange = (e) => setUpdateForm({ ...updateForm, [e.target.name]: e.target.value })
-
+  // Password validation
   const validatePassword = (password) => {
     if (password.length < 6) {
       setMessage({ text: "Password must be at least 6 characters", type: "error" })
@@ -62,18 +30,15 @@ const LoginForm = () => {
     return true
   }
 
+  // Main action handler
   const handleAction = async () => {
     resetMessage()
-
-    if (activeView === "login") {
-      await handleLogin()
-    } else if (activeView === "reset") {
-      await handleResetPassword()
-    } else if (activeView === "update") {
-      await handleUpdatePassword()
-    }
+    if (activeView === "login") await handleLogin()
+    else if (activeView === "reset") await handleResetPassword()
+    else if (activeView === "update") await handleUpdatePassword()
   }
 
+  // Login function
   const handleLogin = async () => {
     if (!form.email || !form.password) {
       setMessage({ text: "Please fill in all fields", type: "error" })
@@ -82,24 +47,28 @@ const LoginForm = () => {
 
     setLoading(true)
     try {
-      await apiLogin(form)
+      const { data } = await apiLogin({
+        email: form.email,
+        password: form.password
+      })
+
+      localStorage.setItem("token", data.token)
       setMessage({ text: "Login successful! Redirecting...", type: "success" })
-      // Replace with your navigation logic
+      
       setTimeout(() => {
-        // window.location.href = "/dashboard" // Simple redirect
-        // Or if using React Router: navigate('/dashboard')
-        console.log("Redirecting to dashboard...")
+        window.location.href = "/dashboard"
       }, 1500)
     } catch (error) {
-      setMessage({
-        text: error.response?.data?.message || "Wrong password", // Changed from 'Login failed' to 'Wrong password'
-        type: "error",
-      })
+      const errorMessage = error.response?.data?.message || 
+                         error.message || 
+                         "Login failed. Please try again."
+      setMessage({ text: errorMessage, type: "error" })
     } finally {
       setLoading(false)
     }
   }
 
+  // Password reset function
   const handleResetPassword = async () => {
     if (!resetForm.email || !resetForm.newPassword || !resetForm.confirmPassword) {
       setMessage({ text: "Please fill in all fields", type: "error" })
@@ -115,7 +84,11 @@ const LoginForm = () => {
 
     setLoading(true)
     try {
-      await apiResetPassword({ email: resetForm.email, password: resetForm.newPassword })
+      await apiResetPassword({
+        email: resetForm.email,
+        newPassword: resetForm.newPassword
+      })
+      
       setMessage({ text: "Password reset successfully!", type: "success" })
       setTimeout(() => setActiveView("login"), 2000)
     } catch (error) {
@@ -128,6 +101,7 @@ const LoginForm = () => {
     }
   }
 
+  // Password update function
   const handleUpdatePassword = async () => {
     if (!updateForm.email || !updateForm.oldPassword || !updateForm.newPassword) {
       setMessage({ text: "Please fill in all fields", type: "error" })
@@ -138,7 +112,12 @@ const LoginForm = () => {
 
     setLoading(true)
     try {
-      await apiUpdatePassword(updateForm)
+      await apiUpdatePassword({
+        email: updateForm.email,
+        oldPassword: updateForm.oldPassword,
+        newPassword: updateForm.newPassword
+      })
+      
       setMessage({ text: "Password updated successfully!", type: "success" })
       setTimeout(() => setActiveView("login"), 2000)
     } catch (error) {
@@ -151,13 +130,7 @@ const LoginForm = () => {
     }
   }
 
-  const handleRegisterClick = () => {
-    // Replace with your navigation logic
-    // window.location.href = "/register" // Simple redirect
-    // Or if using React Router: navigate('/register')
-    console.log("Navigate to register page...")
-  }
-
+  // Form render functions
   const renderLoginForm = () => (
     <>
       <div className="relative">
@@ -324,25 +297,20 @@ const LoginForm = () => {
     </>
   )
 
+  // View title helpers
   const getTitle = () => {
     switch (activeView) {
-      case "reset":
-        return "Reset Password"
-      case "update":
-        return "Update Password"
-      default:
-        return "Welcome Back"
+      case "reset": return "Reset Password"
+      case "update": return "Update Password"
+      default: return "Welcome Back"
     }
   }
 
   const getSubtitle = () => {
     switch (activeView) {
-      case "reset":
-        return "Enter your email and new password"
-      case "update":
-        return "Enter your current and new password"
-      default:
-        return "Sign in to continue your journey"
+      case "reset": return "Enter your email and new password"
+      case "update": return "Enter your current and new password"
+      default: return "Sign in to continue your journey"
     }
   }
 
@@ -362,11 +330,11 @@ const LoginForm = () => {
 
         {/* Message */}
         {message.text && (
-          <div
-            className={`mb-4 p-3 rounded-lg text-center ${
-              message.type === "success" ? "bg-green-100 text-green-800" : "bg-pink-100 text-pink-800"
-            }`}
-          >
+          <div className={`mb-4 p-3 rounded-lg text-center ${
+            message.type === "success" 
+              ? "bg-green-100 text-green-800" 
+              : "bg-pink-100 text-pink-800"
+          }`}>
             {message.text}
           </div>
         )}
@@ -413,7 +381,7 @@ const LoginForm = () => {
           <div className="mt-6 text-center text-sm text-gray-600">
             Don't have an account?{" "}
             <button
-              onClick={handleRegisterClick}
+              onClick={() => window.location.href = "/register"}
               className="text-pink-600 hover:text-blue-600 transition-colors duration-300 font-semibold"
             >
               Create Account
