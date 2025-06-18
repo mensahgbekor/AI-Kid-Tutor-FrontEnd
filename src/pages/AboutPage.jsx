@@ -6,6 +6,8 @@ import NavBar from '../components/Navbar';
 const AboutPage = () => {
   return (
     <>
+
+    
       <NavBar />
       <section id="about" className="py-10 sm:py-14 md:py-16 lg:py-20 bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 md:px-8 lg:px-10">

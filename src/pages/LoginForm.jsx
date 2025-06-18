@@ -56,7 +56,7 @@ const LoginForm = () => {
       setMessage({ text: "Login successful! Redirecting...", type: "success" })
       
       setTimeout(() => {
-        window.location.href = "/dashboard"
+        window.location.href = "/"
       }, 1500)
     } catch (error) {
       const errorMessage = error.response?.data?.message || 

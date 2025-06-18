@@ -14,7 +14,6 @@ const RegisterForm = () => {
     name: '',
     email: '',
     password: '',
-    role: 'user'
   });
 
   const handleInputChange = (e) => {
@@ -30,7 +29,6 @@ const RegisterForm = () => {
       name: '',
       email: '',
       password: '',
-      role: 'user'
     });
   };
 
@@ -67,8 +65,10 @@ const RegisterForm = () => {
       const response = await apiRegister(formData);
       
       if (response && response.status >= 200 && response.status < 300) {
-        showMessage('Registration successful! Your account has been created.', 'success');
+        showMessage('Registration successful! Redirecting to login...', 'success');
         resetForm();
+        // Redirect to login page after 2 seconds
+        setTimeout(() => navigate('/login'), 2000);
       } else {
         showMessage('Registration failed. Please try again.', 'error');
       }
@@ -158,19 +158,6 @@ const RegisterForm = () => {
             </button>
           </div>
 
-          {/* Role Selection */}
-          <div className="relative group">
-            <UserCheck className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-pink-500" />
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleInputChange}
-              className="w-full pl-10 pr-3 py-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-500 focus:outline-none bg-gray-50/50 appearance-none cursor-pointer"
-            >
-              <option value="user">Student</option>
-              <option value="admin">Administrator</option>
-            </select>
-          </div>
 
           {/* Register Button */}
           <button
