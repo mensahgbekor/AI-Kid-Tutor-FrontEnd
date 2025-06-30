@@ -1,7 +1,11 @@
 // components/PricingSection.js
 import React from 'react';
+import { useNavigate } from 'react-router-dom'; // If using React Router
 
 const Pricing = ({ setShowSignup }) => {
+  // If using React Router
+  const navigate = useNavigate();
+
   const plans = [
     {
       name: "Free Trial",
@@ -48,6 +52,17 @@ const Pricing = ({ setShowSignup }) => {
       popular: false
     }
   ];
+
+  const handleButtonClick = () => {
+    // Option 1: If you want to use React Router
+    navigate('/register');
+    
+    // Option 2: If you want to use window.location
+    // window.location.href = '/register';
+    
+    // Option 3: If you want to keep the modal approach
+    // setShowSignup(true);
+  };
 
   return (
     <section id="pricing" className="py-20 bg-white">
@@ -100,7 +115,7 @@ const Pricing = ({ setShowSignup }) => {
                 </ul>
 
                 <button
-                  onClick={() => setShowSignup(true)}
+                  onClick={handleButtonClick}
                   className={`w-full py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
                     plan.popular
                       ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:shadow-lg transform hover:scale-105'
@@ -113,18 +128,6 @@ const Pricing = ({ setShowSignup }) => {
             </div>
           ))}
         </div>
-
-        {/* <div className="text-center mt-12">
-          <p className="text-gray-600 mb-4">
-            Special offer for underprivileged families - 
-            <span className="text-pink-500 font-semibold"> Contact us for free access</span>
-          </p>
-          <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
-            <span>✓ Secure payment with Flutterwave</span>
-            <span>✓ Cancel anytime</span>
-            <span>✓ 7-day money-back guarantee</span>
-          </div>
-        </div> */}
       </div>
     </section>
   );

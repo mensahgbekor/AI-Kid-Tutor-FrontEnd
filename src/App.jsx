@@ -9,7 +9,10 @@ import Features from "./pages/Features";
 import HeroSection from "./pages/HeroSection";
 import Pricing from "./pages/Pricing";
 import ContactForm from "./pages/ContactForm";
-import StudentDashboard from "./pages/StudentDashboard";
+import DashboardLayout from "./layouts/DashboardLayout";
+import StudentDashboard from "./pages/dashboard/StudentDashboard";
+import CoursesPage from "./pages/CoursesPage";
+import CourseDetailsPage from "./pages/CourseDetails";
 
 function App() {
   const router = createBrowserRouter([
@@ -20,8 +23,19 @@ function App() {
     { path: "features", element: <Features /> },
     { path: "hero", element: <HeroSection /> },
     { path: "price", element: <Pricing /> },
-    { path: "contact", element: <ContactForm />},
-    { path: "student", element: <StudentDashboard />,}
+    { path: "contact", element: <ContactForm /> },
+    {path: "courses", element: <CoursesPage />},
+    {path: "/course/:courseId" , element: <CourseDetailsPage />},
+    {
+      path: "/dashboard",
+      element: <DashboardLayout />,
+      children: [
+        {
+          index: true,
+          element: <StudentDashboard />,
+        },
+      ],
+    }
   ]);
 
   return <RouterProvider router={router} />;
