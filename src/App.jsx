@@ -15,6 +15,7 @@ import CoursesPage from "./pages/CoursesPage";
 import CourseDetailsPage from "./pages/CourseDetails";
 import SubjectsPage from "./pages/SubjectsPage";
 import LearningPage from "./pages/LearningPage";
+import AnalyticsPage from "./pages/dashboard/AnalyticsPage";
 
 function App() {
   const router = createBrowserRouter([
@@ -37,6 +38,10 @@ function App() {
         {
           index: true,
           element: <StudentDashboard />,
+        },
+        {
+          path: "analytics",
+          element: <AnalyticsPage />,
         },
       ],
     }

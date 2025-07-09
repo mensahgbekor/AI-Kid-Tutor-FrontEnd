@@ -15,7 +15,8 @@ import {
   MessageCircle,
   LogOut,
   Menu,
-  X
+  X,
+  BarChart3
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -71,6 +72,12 @@ const Sidebar = () => {
       icon: MessageCircle,
       path: '/chat',
       badge: '2'
+    }
+    {
+      id: 'analytics',
+      label: 'Analytics',
+      icon: BarChart3,
+      path: '/dashboard/analytics'
     }
   ];
 
