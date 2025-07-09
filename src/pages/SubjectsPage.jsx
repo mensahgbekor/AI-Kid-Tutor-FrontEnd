@@ -132,8 +132,8 @@ const SubjectsPage = () => {
     <div>
       {/* AI Tutor Chat Modal */}
       <AITutorChat
-        subjectId={subject.id}
         childProfile={selectedChild}
+        isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
       />
     </div>
