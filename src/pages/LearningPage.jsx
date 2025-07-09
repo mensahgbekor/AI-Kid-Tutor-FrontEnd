@@ -546,6 +546,12 @@ const LearningPage = () => {
                         className="prose prose-lg max-w-none"
                         children={content}
                       />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <button 
+                      onClick={() => setCurrentStep('lessons')}
                       className="text-gray-600 hover:text-gray-800 transition-colors flex items-center space-x-2"
                     >
                       <ChevronLeft className="w-5 h-5" />
