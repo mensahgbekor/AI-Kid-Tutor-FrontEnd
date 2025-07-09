@@ -542,10 +542,9 @@ const LearningPage = () => {
                 <div className="prose max-w-none">
                   <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-6">
                     <div className="text-gray-800 leading-relaxed">
-                      <ReactMarkdown
-                        className="prose prose-lg max-w-none"
-                        children={content}
-                      />
+                      <div className="prose prose-lg max-w-none">
+                        <ReactMarkdown children={content} />
+                      </div>
                     </div>
                   </div>
                   
