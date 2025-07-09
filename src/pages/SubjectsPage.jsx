@@ -17,16 +17,32 @@ import AITutorChat from '../components/AITutorChat';
 
 const SubjectsPage = () => {
   const [showAIChat, setShowAIChat] = useState(false);
+  const [selectedAge, setSelectedAge] = useState(null);
+  const [showAgeSelector, setShowAgeSelector] = useState(true);
   const navigate = useNavigate();
 
-  // Default child profile (no selection needed)
-  const defaultChild = { 
+  // Child profile based on selected age
+  const getChildProfile = () => ({
     id: 1, 
     name: 'Student', 
-    age: 10, 
+    age: selectedAge || 8, 
     avatar: '👤',
     interests: ['Learning', 'Discovery', 'Knowledge'],
     learning_preferences: { visual: 50, auditory: 30, kinesthetic: 20 }
+  });
+
+  const ages = [5, 6, 7, 8, 9, 10, 11, 12];
+
+  const getAgeDescription = (age) => {
+    if (age <= 6) return "Early Explorer";
+    if (age <= 8) return "Curious Learner";
+    if (age <= 10) return "Knowledge Seeker";
+    return "Advanced Thinker";
+  };
+
+  const handleAgeSelect = (age) => {
+    setSelectedAge(age);
+    setShowAgeSelector(false);
   };
 
   const subjects = [
@@ -66,13 +82,62 @@ const SubjectsPage = () => {
   ];
 
   const handleSubjectClick = (subject) => {
+    if (!selectedAge) {
+      setShowAgeSelector(true);
+      return;
+    }
+    
     navigate(`/learning/${subject.id}`, { 
       state: { 
         subject, 
-        child: defaultChild 
+        child: getChildProfile()
       } 
     });
   };
+
+  // Age Selection Modal
+  if (showAgeSelector) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <span className="text-2xl">🎂</span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">How old are you?</h2>
+            <p className="text-gray-600">This helps us create the perfect learning experience for you!</p>
+          </div>
+
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            {ages.map((age) => (
+              <button
+                key={age}
+                onClick={() => handleAgeSelect(age)}
+                className="group relative bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-transparent hover:border-blue-300 rounded-xl p-4 transition-all duration-300 transform hover:scale-105"
+              >
+                <div className="text-2xl font-bold text-gray-800 mb-1">{age}</div>
+                <div className="text-xs text-gray-600">{getAgeDescription(age)}</div>
+              </button>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-500 mb-4">
+              Don't worry, you can change this later!
+            </p>
+            {selectedAge && (
+              <button
+                onClick={() => setShowAgeSelector(false)}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                Skip for now
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6">
@@ -81,13 +146,25 @@ const SubjectsPage = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
-              <div className="text-4xl">{defaultChild.avatar}</div>
+              <div className="text-4xl">{getChildProfile().avatar}</div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-800">Learning Subjects</h1>
                 <p className="text-gray-600">Choose a subject to start your learning adventure!</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              {selectedAge && (
+                <div className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-2">
+                  <span>🎂</span>
+                  <span>Age {selectedAge}</span>
+                  <button
+                    onClick={() => setShowAgeSelector(true)}
+                    className="ml-2 text-blue-600 hover:text-blue-800 text-xs underline"
+                  >
+                    Change
+                  </button>
+                </div>
+              )}
               <button
                 onClick={() => setShowAIChat(true)}
                 className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-300 flex items-center space-x-2"
@@ -103,7 +180,9 @@ const SubjectsPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Ready to learn:</p>
-                <p className="text-lg font-bold text-gray-800">Core Subjects</p>
+                <p className="text-lg font-bold text-gray-800">
+                  {selectedAge ? `${getAgeDescription(selectedAge)} Level` : 'Core Subjects'}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-600">Available subjects:</p>
@@ -221,7 +300,7 @@ const SubjectsPage = () => {
 
       {/* AI Tutor Chat Modal */}
       <AITutorChat
-        childProfile={defaultChild}
+        childProfile={getChildProfile()}
         isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
       />
