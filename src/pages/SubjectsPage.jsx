@@ -3,12 +3,9 @@ import { motion } from 'framer-motion';
 import { 
   Brain, 
   BookOpen, 
-  Gamepad2, 
   Calculator, 
-  Globe, 
-  Palette, 
-  Music, 
   Beaker,
+  FileText,
   Play,
   Star,
   Clock,
@@ -19,42 +16,20 @@ import { useNavigate } from 'react-router-dom';
 import AITutorChat from '../components/AITutorChat';
 
 const SubjectsPage = () => {
-  const [selectedChild, setSelectedChild] = useState(null);
   const [showAIChat, setShowAIChat] = useState(false);
   const navigate = useNavigate();
 
-  // Mock child data - replace with actual data from Supabase
-  const children = [
-    { 
-      id: 1, 
-      name: 'Emma', 
-      age: 8, 
-      avatar: '👧',
-      interests: ['AI', 'Art', 'Animals'],
-      learning_preferences: { visual: 60, auditory: 25, kinesthetic: 15 }
-    },
-    { 
-      id: 2, 
-      name: 'Alex', 
-      age: 10, 
-      avatar: '👦',
-      interests: ['Coding', 'Games', 'Science'],
-      learning_preferences: { visual: 40, auditory: 30, kinesthetic: 30 }
-    }
-  ];
+  // Default child profile (no selection needed)
+  const defaultChild = { 
+    id: 1, 
+    name: 'Student', 
+    age: 10, 
+    avatar: '👤',
+    interests: ['Learning', 'Discovery', 'Knowledge'],
+    learning_preferences: { visual: 50, auditory: 30, kinesthetic: 20 }
+  };
 
   const subjects = [
-    {
-      id: 'ai-basics',
-      title: 'AI & Technology',
-      description: 'Learn about artificial intelligence, robots, and how computers think',
-      icon: Brain,
-      color: 'from-purple-500 to-pink-500',
-      difficulty: 'Beginner',
-      lessons: 12,
-      duration: '3 hours',
-      topics: ['What is AI?', 'Smart Assistants', 'Machine Learning', 'Robots']
-    },
     {
       id: 'mathematics',
       title: 'Mathematics',
@@ -78,52 +53,23 @@ const SubjectsPage = () => {
       topics: ['Nature', 'Experiments', 'Animals', 'Space']
     },
     {
-      id: 'creative-arts',
-      title: 'Creative Arts',
-      description: 'Express yourself through art, music, and creative projects',
-      icon: Palette,
-      color: 'from-pink-500 to-rose-500',
-      difficulty: 'Beginner',
-      lessons: 8,
-      duration: '2 hours',
-      topics: ['Drawing', 'Colors', 'Music', 'Crafts']
-    },
-    {
-      id: 'world-explorer',
-      title: 'World Explorer',
-      description: 'Travel the world and learn about different cultures and places',
-      icon: Globe,
-      color: 'from-orange-500 to-red-500',
+      id: 'english',
+      title: 'English Language',
+      description: 'Master reading, writing, and communication skills',
+      icon: FileText,
+      color: 'from-purple-500 to-pink-500',
       difficulty: 'Beginner',
       lessons: 12,
       duration: '3 hours',
-      topics: ['Countries', 'Cultures', 'Languages', 'Geography']
-    },
-    {
-      id: 'coding-games',
-      title: 'Coding & Games',
-      description: 'Learn programming through fun games and interactive activities',
-      icon: Gamepad2,
-      color: 'from-indigo-500 to-purple-500',
-      difficulty: 'Intermediate',
-      lessons: 20,
-      duration: '5 hours',
-      topics: ['Scratch', 'Logic', 'Algorithms', 'Game Design']
+      topics: ['Reading', 'Writing', 'Grammar', 'Vocabulary']
     }
   ];
-
-  useEffect(() => {
-    // Set default child
-    if (children.length > 0) {
-      setSelectedChild(children[0]);
-    }
-  }, []);
 
   const handleSubjectClick = (subject) => {
     navigate(`/learning/${subject.id}`, { 
       state: { 
         subject, 
-        child: selectedChild 
+        child: defaultChild 
       } 
     });
   };
@@ -135,25 +81,13 @@ const SubjectsPage = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
-              <div className="text-4xl">{selectedChild?.avatar}</div>
+              <div className="text-4xl">{defaultChild.avatar}</div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-800">Learning Subjects</h1>
                 <p className="text-gray-600">Choose a subject to start your learning adventure!</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <select 
-                value={selectedChild?.name || ''} 
-                onChange={(e) => {
-                  const child = children.find(c => c.name === e.target.value);
-                  setSelectedChild(child);
-                }}
-                className="bg-blue-100 border border-blue-300 rounded-lg px-4 py-2 text-blue-800 font-medium"
-              >
-                {children.map(child => (
-                  <option key={child.name} value={child.name}>{child.name}</option>
-                ))}
-              </select>
               <button
                 onClick={() => setShowAIChat(true)}
                 className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-300 flex items-center space-x-2"
@@ -164,21 +98,19 @@ const SubjectsPage = () => {
             </div>
           </div>
 
-          {/* Child Info */}
-          {selectedChild && (
-            <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Learning for:</p>
-                  <p className="text-lg font-bold text-gray-800">{selectedChild.name}, age {selectedChild.age}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Interests:</p>
-                  <p className="text-sm font-medium text-gray-800">{selectedChild.interests.join(', ')}</p>
-                </div>
+          {/* Learning Info */}
+          <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Ready to learn:</p>
+                <p className="text-lg font-bold text-gray-800">Core Subjects</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-600">Available subjects:</p>
+                <p className="text-sm font-medium text-gray-800">Mathematics, Science, English</p>
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Subjects Grid */}
@@ -259,7 +191,7 @@ const SubjectsPage = () => {
             <div className="bg-gradient-to-r from-green-100 to-green-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-green-700">Subjects Started</p>
+                  <p className="text-sm text-green-700">Subjects Available</p>
                   <p className="text-2xl font-bold text-green-800">3</p>
                 </div>
                 <BookOpen className="text-green-600" size={32} />
@@ -268,8 +200,8 @@ const SubjectsPage = () => {
             <div className="bg-gradient-to-r from-blue-100 to-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-blue-700">Lessons Completed</p>
-                  <p className="text-2xl font-bold text-blue-800">12</p>
+                  <p className="text-sm text-blue-700">Total Lessons</p>
+                  <p className="text-2xl font-bold text-blue-800">37</p>
                 </div>
                 <Trophy className="text-blue-600" size={32} />
               </div>
@@ -277,8 +209,8 @@ const SubjectsPage = () => {
             <div className="bg-gradient-to-r from-purple-100 to-purple-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-purple-700">Stars Earned</p>
-                  <p className="text-2xl font-bold text-purple-800">28</p>
+                  <p className="text-sm text-purple-700">Learning Hours</p>
+                  <p className="text-2xl font-bold text-purple-800">9.5</p>
                 </div>
                 <Star className="text-purple-600" size={32} />
               </div>
@@ -289,7 +221,7 @@ const SubjectsPage = () => {
 
       {/* AI Tutor Chat Modal */}
       <AITutorChat
-        childProfile={selectedChild}
+        childProfile={defaultChild}
         isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
       />
