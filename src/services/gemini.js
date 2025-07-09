@@ -422,10 +422,8 @@ export const withErrorHandling = (fn) => {
       if (fn === chatWithTutor) {
         return "I'm having a little trouble right now, but I'm still here to help! Can you try asking me again? 😊";
       }
-      
-      throw error;
-    }
-  };
+  }
+};
 };
 
 // Export wrapped functions with error handling
