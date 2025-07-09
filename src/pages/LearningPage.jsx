@@ -23,6 +23,7 @@ import InteractiveQuiz from '../components/InteractiveQuiz';
 import { subjects } from '../data/subjects';
 import TutorAvatar from '../components/TutorAvatar';
 import AITutorChat from '../components/AITutorChat';
+import ReactMarkdown from 'react-markdown';
 import { 
   learningService, 
   quizService, 
@@ -549,10 +550,34 @@ const LearningPage = () => {
                   <div className="flex justify-between">
                     <button 
                       onClick={() => setCurrentStep('lessons')}
-                      className="bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all duration-300 flex items-center space-x-2"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                      <span>Back to Lessons</span>
+                      <div className="text-gray-800 leading-relaxed">
+                        <ReactMarkdown
+                          className="prose prose-lg max-w-none"
+                          components={{
+                            h1: ({children}) => <h1 className="text-2xl font-bold text-blue-800 mb-4">{children}</h1>,
+                            h2: ({children}) => <h2 className="text-xl font-bold text-purple-700 mb-3 mt-6">{children}</h2>,
+                            h3: ({children}) => <h3 className="text-lg font-semibold text-gray-800 mb-2 mt-4">{children}</h3>,
+                            p: ({children}) => <p className="mb-4 text-gray-700 leading-relaxed">{children}</p>,
+                            ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-2">{children}</ul>,
+                            ol: ({children}) => <ol className="list-decimal list-inside mb-4 space-y-2">{children}</ol>,
+                            li: ({children}) => <li className="text-gray-700 ml-4">{children}</li>,
+                            strong: ({children}) => <strong className="font-bold text-gray-800">{children}</strong>,
+                            em: ({children}) => <em className="italic text-gray-700">{children}</em>,
+                            blockquote: ({children}) => (
+                              <blockquote className="border-l-4 border-blue-500 pl-4 py-2 my-4 bg-blue-50 rounded-r-lg">
+                                {children}
+                              </blockquote>
+                            ),
+                            code: ({children}) => (
+                              <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">
+                                {children}
+                              </code>
+                            )
+                          }}
+                        >
+                          {content}
+                        </ReactMarkdown>
+                      </div>
                     </button>
                     
                     <button 
