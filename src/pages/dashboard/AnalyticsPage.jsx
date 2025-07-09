@@ -18,43 +18,45 @@ import { childService, parentService } from '../../services/supabase';
 import { useComprehensiveAnalytics } from '../../hooks/useAnalytics';
 
 const AnalyticsPage = () => {
-  const [selectedChild, setSelectedChild] = useState(null);
-  const [children, setChildren] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Load children on component mount
   useEffect(() => {
-    loadChildren();
+    checkAuthAndLoadUser();
   }, []);
 
-  const loadChildren = async () => {
+  const checkAuthAndLoadUser = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Get current user's parent profile
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!user.id) {
-        throw new Error('User not found');
+      // Check for token-based authentication
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
       }
 
-      // Get parent profile
-      const parentProfile = await parentService.getParentProfile(user.id);
-      if (!parentProfile) {
-        throw new Error('Parent profile not found');
+      // Get user info from localStorage
+      const userEmail = localStorage.getItem('userEmail');
+      const userName = localStorage.getItem('userName');
+      
+      if (!userEmail) {
+        throw new Error('User email not found');
       }
 
-      // Get children
-      const childrenData = await childService.getChildrenByParent(parentProfile.id);
-      setChildren(childrenData || []);
-
-      // Select first child by default
-      if (childrenData && childrenData.length > 0) {
-        setSelectedChild(childrenData[0]);
-      }
+      // Create user object
+      const userData = {
+        id: userEmail,
+        email: userEmail,
+        name: userName || userEmail.split('@')[0]
+      };
+      
+      setCurrentUser(userData);
     } catch (err) {
-      console.error('Error loading children:', err);
+      console.error('Error loading user:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -88,10 +90,10 @@ const AnalyticsPage = () => {
               <div className="text-red-500 mb-4">
                 <BarChart3 className="w-12 h-12 mx-auto" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Unable to Load Analytics</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Unable to Load User Data</h3>
               <p className="text-gray-600 mb-4">{error}</p>
               <button
-                onClick={loadChildren}
+                onClick={checkAuthAndLoadUser}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
               >
                 Try Again
@@ -103,7 +105,7 @@ const AnalyticsPage = () => {
     );
   }
 
-  if (children.length === 0) {
+  if (!currentUser) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6">
         <div className="max-w-7xl mx-auto">
@@ -112,15 +114,15 @@ const AnalyticsPage = () => {
               <div className="text-gray-400 mb-4">
                 <Users className="w-12 h-12 mx-auto" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">No Children Found</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">User Not Found</h3>
               <p className="text-gray-600 mb-4">
-                You need to add child profiles to view analytics.
+                Please sign in to view your analytics.
               </p>
               <button
-                onClick={() => window.location.href = '/dashboard/children'}
+                onClick={() => navigate('/login')}
                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
               >
-                Add Child Profile
+                Sign In
               </button>
             </div>
           </div>
@@ -150,43 +152,25 @@ const AnalyticsPage = () => {
                 </p>
               </div>
               
-              {/* Child Selector */}
-              {children.length > 1 && (
-                <div className="flex items-center space-x-4">
-                  <label className="text-sm font-medium text-gray-700">
-                    Select Child:
-                  </label>
-                  <select
-                    value={selectedChild?.id || ''}
-                    onChange={(e) => {
-                      const child = children.find(c => c.id === e.target.value);
-                      setSelectedChild(child);
-                    }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  >
-                    {children.map((child) => (
-                      <option key={child.id} value={child.id}>
-                        {child.name} (Age {child.age})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              {/* User Info */}
+              <div className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium">
+                Welcome, {currentUser.name}
+              </div>
             </div>
           </div>
         </motion.div>
 
         {/* Analytics Dashboard */}
-        {selectedChild && (
+        {currentUser && (
           <motion.div
-            key={selectedChild.id}
+            key={currentUser.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
             <AnalyticsDashboard
-              childId={selectedChild.id}
-              childProfile={selectedChild}
+              childId={currentUser.id}
+              childProfile={currentUser}
             />
           </motion.div>
         )}
@@ -218,7 +202,7 @@ const AnalyticsPage = () => {
               
               <button className="flex items-center justify-center space-x-2 p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors">
                 <Calendar className="w-5 h-5 text-yellow-600" />
-                <span className="text-yellow-600 font-medium">Schedule Review</span>
+                <span className="text-yellow-600 font-medium">Learning Schedule</span>
               </button>
             </div>
           </div>
@@ -248,9 +232,9 @@ const AnalyticsPage = () => {
                 <div className="bg-green-100 p-3 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
                   <Brain className="w-6 h-6 text-green-600" />
                 </div>
-                <h4 className="font-semibold text-gray-800 mb-2">AI Insights</h4>
+                <h4 className="font-semibold text-gray-800 mb-2">AI Learning Insights</h4>
                 <p className="text-sm text-gray-600">
-                  Get personalized recommendations based on learning patterns
+                  Get personalized recommendations based on your learning patterns
                 </p>
               </div>
               
@@ -258,9 +242,9 @@ const AnalyticsPage = () => {
                 <div className="bg-purple-100 p-3 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
                   <Target className="w-6 h-6 text-purple-600" />
                 </div>
-                <h4 className="font-semibold text-gray-800 mb-2">Goal Tracking</h4>
+                <h4 className="font-semibold text-gray-800 mb-2">Learning Goals</h4>
                 <p className="text-sm text-gray-600">
-                  Set and monitor learning goals with detailed progress reports
+                  Set and monitor your learning goals with detailed progress reports
                 </p>
               </div>
               
@@ -268,9 +252,9 @@ const AnalyticsPage = () => {
                 <div className="bg-yellow-100 p-3 rounded-full w-12 h-12 mx-auto mb-3 flex items-center justify-center">
                   <Award className="w-6 h-6 text-yellow-600" />
                 </div>
-                <h4 className="font-semibold text-gray-800 mb-2">Achievement System</h4>
+                <h4 className="font-semibold text-gray-800 mb-2">Your Achievements</h4>
                 <p className="text-sm text-gray-600">
-                  Track milestones, badges, and learning achievements
+                  Track your milestones, badges, and learning achievements
                 </p>
               </div>
             </div>

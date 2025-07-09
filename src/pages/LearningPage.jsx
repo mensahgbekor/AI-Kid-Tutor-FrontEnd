@@ -36,7 +36,7 @@ const LearningPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const { subjectId: stateSubjectId, subtopicId: stateSubtopicId, child } = location.state || {};
+  const { subjectId: stateSubjectId, subtopicId: stateSubtopicId, child: user } = location.state || {};
   
   // Get subject and subtopic from local data using IDs
   const subject = subjects.find(s => s.id === (stateSubjectId || subjectId));
@@ -51,29 +51,29 @@ const LearningPage = () => {
   const [tutorState, setTutorState] = useState({
     name: 'AI Tutor',
     mood: 'happy',
-    message: `Hi ${child?.name}! Ready to explore ${subtopic?.title}? Let's start learning! 🚀`
+    message: `Hi ${user?.name}! Ready to explore ${subtopic?.title}? Let's start learning! 🚀`
   });
 
   const { content, loading: contentLoading, generateContent } = useAIContent();
   const { questions, loading: quizLoading, generateQuiz } = useAIQuiz();
 
   useEffect(() => {
-    if (!subject || !subtopic || !child || !child.id) {
-      console.error('Missing required data:', { subject, subtopic, child });
+    if (!subject || !subtopic || !user || !user.id) {
+      console.error('Missing required data:', { subject, subtopic, user });
       navigate('/subjects');
       return;
     }
 
     initializeLearning();
-  }, [subject, subtopic, child, navigate]);
+  }, [subject, subtopic, user, navigate]);
 
   const initializeLearning = async () => {
     try {
       setLoading(true);
       
-      // Validate child profile has a valid database ID
-      if (!child || !child.id) {
-        console.error('Invalid child profile:', child);
+      // Validate user profile has a valid database ID
+      if (!user || !user.id) {
+        console.error('Invalid user profile:', user);
         navigate('/subjects');
         return;
       }
@@ -93,13 +93,13 @@ const LearningPage = () => {
 
   const createLearningSession = async () => {
     try {
-      // Double-check child ID exists
-      if (!child || !child.id) {
-        throw new Error('Child profile is missing or invalid');
+      // Double-check user ID exists
+      if (!user || !user.id) {
+        throw new Error('User profile is missing or invalid');
       }
 
       const sessionData = {
-        child_id: child.id,
+        child_id: user.id,
         session_type: 'lesson',
         subject: subject.title,
         topic: subtopic.title,
@@ -122,7 +122,7 @@ const LearningPage = () => {
   const loadLessonProgress = async () => {
     try {
       const progress = await lessonProgressService.getLessonProgress(
-        child.id, 
+        user.id, 
         subject.id, 
         subtopic.id
       );
@@ -163,7 +163,7 @@ const LearningPage = () => {
     // Update lesson progress to in_progress
     try {
       await lessonProgressService.updateLessonProgress(
-        child.id,
+        user.id,
         subject.id,
         subtopic.id,
         lessonIndex.toString(),
@@ -183,12 +183,12 @@ const LearningPage = () => {
     setTutorState({
       name: 'AI Tutor',
       mood: 'thinking',
-      message: `Let me prepare an exciting lesson about "${lesson}" for you! 🤔`
+      message: `Let me prepare an exciting lesson about "${lesson}" for ${user.name}! 🤔`
     });
 
     try {
-      const prompt = `Create a comprehensive lesson about "${lesson}" in the context of ${subtopic.title} for ${subject.title}. This is for a ${child.age}-year-old child at ${subtopic.difficulty} level.`;
-      await generateContent(prompt, `${child.age} years old`, subtopic.difficulty.toLowerCase());
+      const prompt = `Create a comprehensive lesson about "${lesson}" in the context of ${subtopic.title} for ${subject.title}. This is for a student at ${subtopic.difficulty} level.`;
+      await generateContent(prompt, 'student', subtopic.difficulty.toLowerCase());
       
       setTutorState({
         name: 'AI Tutor',
@@ -235,7 +235,7 @@ const LearningPage = () => {
       // Save quiz result to database
       const quizData = {
         session_id: sessionId,
-        child_id: child.id,
+        child_id: user.id,
         quiz_type: subtopic.title,
         subject: subject.title,
         topic: subtopic.title,
@@ -251,7 +251,7 @@ const LearningPage = () => {
 
       // Mark lesson as completed
       await lessonProgressService.completeLessson(
-        child.id,
+        user.id,
         subject.id,
         subtopic.id,
         currentLessonIndex.toString(),
@@ -286,7 +286,7 @@ const LearningPage = () => {
         setTutorState({
           name: 'AI Tutor',
           mood: 'celebrating',
-          message: `Wow! You scored ${result.score}%! You've mastered "${subtopic.lessons[currentLessonIndex]}"! 🎉⭐`
+          message: `Wow ${user.name}! You scored ${result.score}%! You've mastered "${subtopic.lessons[currentLessonIndex]}"! 🎉⭐`
         });
       } else if (result.score >= 60) {
         setTutorState({
@@ -319,7 +319,7 @@ const LearningPage = () => {
         : 0;
 
       await subjectProgressService.updateSubjectProgress(
-        child.id,
+        user.id,
         subject.id,
         subtopic.id,
         {
@@ -351,7 +351,7 @@ const LearningPage = () => {
       
       // Navigate back to topics after celebration
       setTimeout(() => {
-        navigate(`/subjects/${subjectId}`, { state: { child } });
+        navigate(`/subjects/${subjectId}`, { state: { child: user } });
       }, 3000);
     }
   };
@@ -375,12 +375,12 @@ const LearningPage = () => {
     );
   }
 
-  if (!subject || !subtopic || !child) {
+  if (!subject || !subtopic || !user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 mb-4">
-            <p>Missing required information. Please select a child and subject.</p>
+            <p>Missing required information. Please select a subject.</p>
           </div>
           <button
             onClick={() => navigate('/subjects')}
@@ -399,7 +399,7 @@ const LearningPage = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <button 
-            onClick={() => navigate(`/subjects/${subjectId}`, { state: { child } })}
+            onClick={() => navigate(`/subjects/${subjectId}`, { state: { child: user } })}
             className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
           >
             <ArrowLeft size={20} className="mr-2" />
@@ -616,7 +616,7 @@ const LearningPage = () => {
               <div className="mb-6">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  Great Job, {child.name}!
+                  Great Job, {user.name}!
                 </h2>
                 <p className="text-gray-600">
                   You've completed "{subtopic.lessons[currentLessonIndex]}"!
@@ -643,7 +643,7 @@ const LearningPage = () => {
                   </>
                 ) : (
                   <button
-                    onClick={() => navigate(`/subjects/${subjectId}`, { state: { child } })}
+                    onClick={() => navigate(`/subjects/${subjectId}`, { state: { child: user } })}
                     className="bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-blue-600 transition-all duration-300 flex items-center space-x-2"
                   >
                     <Trophy className="w-5 h-5" />
@@ -658,7 +658,7 @@ const LearningPage = () => {
 
       {/* AI Tutor Chat Modal */}
       <AITutorChat
-        childProfile={child}
+        childProfile={user}
         isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
       />
