@@ -87,7 +87,7 @@ const SubjectsPage = () => {
       return;
     }
     
-    navigate(`/learning/${subject.id}`, { 
+    navigate(`/subjects/${subject.id}`, { 
       state: { 
         subject, 
         child: getChildProfile()

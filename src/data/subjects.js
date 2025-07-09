@@ -8,28 +8,66 @@ export const subjects = [
     icon: Calculator,
     color: 'from-blue-500 to-cyan-500',
     bgColor: 'bg-blue-50',
-    topics: ['Basic Math', 'Patterns', 'Geometry', 'Logic Puzzles'],
-    activities: [
+    subtopics: [
       {
-        id: 'number-patterns',
-        title: 'Number Patterns',
-        description: 'Discover patterns in numbers and sequences',
+        id: 'basic-arithmetic',
+        title: 'Basic Arithmetic',
+        description: 'Addition, subtraction, multiplication, and division',
         difficulty: 'Beginner',
-        duration: '20 min'
+        estimatedTime: '30 min',
+        icon: '🔢',
+        lessons: [
+          'Understanding Numbers',
+          'Addition Basics',
+          'Subtraction Fun',
+          'Multiplication Magic',
+          'Division Discovery'
+        ]
       },
       {
-        id: 'geometry-shapes',
+        id: 'geometry',
         title: 'Geometry & Shapes',
         description: 'Explore shapes, angles, and spatial relationships',
-        difficulty: 'Intermediate',
-        duration: '30 min'
+        difficulty: 'Beginner',
+        estimatedTime: '25 min',
+        icon: '📐',
+        lessons: [
+          'Basic Shapes',
+          'Lines and Angles',
+          'Perimeter and Area',
+          'Symmetry',
+          '3D Shapes'
+        ]
       },
       {
-        id: 'problem-solving',
-        title: 'Problem Solving',
-        description: 'Learn strategies to solve math problems',
+        id: 'patterns',
+        title: 'Patterns & Logic',
+        description: 'Discover patterns in numbers and sequences',
         difficulty: 'Intermediate',
-        duration: '25 min'
+        estimatedTime: '20 min',
+        icon: '🔄',
+        lessons: [
+          'Number Patterns',
+          'Shape Patterns',
+          'Logic Puzzles',
+          'Sequences',
+          'Problem Solving'
+        ]
+      },
+      {
+        id: 'fractions',
+        title: 'Fractions & Decimals',
+        description: 'Understanding parts of a whole',
+        difficulty: 'Intermediate',
+        estimatedTime: '35 min',
+        icon: '🍕',
+        lessons: [
+          'What are Fractions?',
+          'Adding Fractions',
+          'Decimal Basics',
+          'Converting Fractions',
+          'Real-world Applications'
+        ]
       }
     ]
   },
@@ -40,28 +78,66 @@ export const subjects = [
     icon: Microscope,
     color: 'from-green-500 to-teal-500',
     bgColor: 'bg-green-50',
-    topics: ['Nature', 'Experiments', 'Animals', 'Space'],
-    activities: [
+    subtopics: [
       {
-        id: 'solar-system',
-        title: 'Solar System',
-        description: 'Journey through space and learn about planets',
+        id: 'living-things',
+        title: 'Living Things',
+        description: 'Discover plants, animals, and how they live',
         difficulty: 'Beginner',
-        duration: '25 min'
+        estimatedTime: '25 min',
+        icon: '🌱',
+        lessons: [
+          'Plants and Animals',
+          'Life Cycles',
+          'Habitats',
+          'Food Chains',
+          'Human Body Basics'
+        ]
       },
       {
-        id: 'simple-experiments',
-        title: 'Simple Experiments',
-        description: 'Safe and fun science experiments to try',
+        id: 'earth-space',
+        title: 'Earth & Space',
+        description: 'Journey through our planet and the universe',
         difficulty: 'Beginner',
-        duration: '30 min'
+        estimatedTime: '30 min',
+        icon: '🌍',
+        lessons: [
+          'Our Planet Earth',
+          'Weather and Climate',
+          'Day and Night',
+          'Solar System',
+          'Moon and Stars'
+        ]
       },
       {
-        id: 'animal-habitats',
-        title: 'Animal Habitats',
-        description: 'Discover where animals live and how they adapt',
+        id: 'matter-energy',
+        title: 'Matter & Energy',
+        description: 'Explore what things are made of and how they work',
+        difficulty: 'Intermediate',
+        estimatedTime: '25 min',
+        icon: '⚡',
+        lessons: [
+          'States of Matter',
+          'Heat and Temperature',
+          'Light and Sound',
+          'Simple Machines',
+          'Forces and Motion'
+        ]
+      },
+      {
+        id: 'experiments',
+        title: 'Fun Experiments',
+        description: 'Safe and exciting hands-on science activities',
         difficulty: 'Beginner',
-        duration: '20 min'
+        estimatedTime: '40 min',
+        icon: '🧪',
+        lessons: [
+          'Kitchen Science',
+          'Water Experiments',
+          'Color Mixing',
+          'Growing Plants',
+          'Simple Chemistry'
+        ]
       }
     ]
   },
@@ -72,28 +148,66 @@ export const subjects = [
     icon: FileText,
     color: 'from-purple-500 to-pink-500',
     bgColor: 'bg-purple-50',
-    topics: ['Reading', 'Writing', 'Grammar', 'Vocabulary'],
-    activities: [
+    subtopics: [
       {
         id: 'reading-comprehension',
-        title: 'Reading Comprehension',
+        title: 'Reading & Comprehension',
         description: 'Improve understanding of texts and stories',
         difficulty: 'Beginner',
-        duration: '25 min'
+        estimatedTime: '25 min',
+        icon: '📖',
+        lessons: [
+          'Phonics Basics',
+          'Reading Stories',
+          'Understanding Characters',
+          'Main Ideas',
+          'Making Predictions'
+        ]
       },
       {
-        id: 'creative-writing',
-        title: 'Creative Writing',
-        description: 'Express your imagination through writing',
+        id: 'writing-skills',
+        title: 'Writing Skills',
+        description: 'Express your thoughts through creative writing',
         difficulty: 'Intermediate',
-        duration: '35 min'
+        estimatedTime: '35 min',
+        icon: '✍️',
+        lessons: [
+          'Sentence Building',
+          'Paragraph Writing',
+          'Creative Stories',
+          'Descriptive Writing',
+          'Letter Writing'
+        ]
       },
       {
         id: 'grammar-basics',
         title: 'Grammar Basics',
         description: 'Learn the building blocks of language',
         difficulty: 'Beginner',
-        duration: '20 min'
+        estimatedTime: '20 min',
+        icon: '📝',
+        lessons: [
+          'Nouns and Verbs',
+          'Adjectives',
+          'Sentence Structure',
+          'Punctuation',
+          'Capital Letters'
+        ]
+      },
+      {
+        id: 'vocabulary',
+        title: 'Vocabulary Building',
+        description: 'Expand your word knowledge and usage',
+        difficulty: 'Beginner',
+        estimatedTime: '20 min',
+        icon: '📚',
+        lessons: [
+          'New Words Daily',
+          'Word Families',
+          'Synonyms and Antonyms',
+          'Context Clues',
+          'Fun with Words'
+        ]
       }
     ]
   }

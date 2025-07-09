@@ -14,6 +14,7 @@ import StudentDashboard from "./pages/dashboard/StudentDashboard";
 import CoursesPage from "./pages/CoursesPage";
 import CourseDetailsPage from "./pages/CourseDetails";
 import SubjectsPage from "./pages/SubjectsPage";
+import SubjectTopicsPage from "./pages/SubjectTopicsPage";
 import LearningPage from "./pages/LearningPage";
 import AnalyticsPage from "./pages/dashboard/AnalyticsPage";
 
@@ -30,7 +31,8 @@ function App() {
     {path: "courses", element: <CoursesPage />},
     {path: "/course/:courseId" , element: <CourseDetailsPage />},
     {path: "subjects", element: <SubjectsPage />},
-    {path: "/learning/:subjectId", element: <LearningPage />},
+    {path: "/subjects/:subjectId", element: <SubjectTopicsPage />},
+    {path: "/learning/:subjectId/:subtopicId", element: <LearningPage />},
     {
       path: "/dashboard",
       element: <DashboardLayout />,
