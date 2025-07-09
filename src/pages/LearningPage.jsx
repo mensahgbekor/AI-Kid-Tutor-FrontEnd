@@ -57,6 +57,9 @@ const LearningPage = () => {
   const { content, loading: contentLoading, generateContent } = useAIContent();
   const { questions, loading: quizLoading, generateQuiz } = useAIQuiz();
 
+  // Add state for questions to ensure they persist
+  const [quizQuestions, setQuizQuestions] = useState([]);
+
   useEffect(() => {
     if (!subject || !subtopic || !user || !user.id) {
       console.error('Missing required data:', { subject, subtopic, user });
@@ -229,7 +232,8 @@ const LearningPage = () => {
       
       console.log('Generating quiz with:', { quizSubject, quizTopic, difficulty });
       
-      await generateQuiz(quizSubject, quizTopic, difficulty, 5);
+      const generatedQuestions = await generateQuiz(quizSubject, quizTopic, difficulty, 5);
+      setQuizQuestions(generatedQuestions);
       setCurrentStep('quiz');
       setTutorState({
         name: 'AI Tutor',
@@ -246,16 +250,17 @@ const LearningPage = () => {
       
       // Fallback: Create a simple quiz manually if AI generation fails
       setTimeout(() => {
-        createFallbackQuiz(currentLesson);
+        const fallbackQuestions = createFallbackQuiz(currentLesson);
+        setQuizQuestions(fallbackQuestions);
       }, 2000);
     }
   };
 
   const createFallbackQuiz = (lessonTitle) => {
-    const fallbackQuestions = [
+    return [
       {
         id: 1,
-        text: `What did you learn about in the "${lessonTitle}" lesson?`,
+        question: `What did you learn about in the "${lessonTitle}" lesson?`,
         options: [
           { id: 'A', text: 'Important concepts and ideas', isCorrect: true },
           { id: 'B', text: 'Nothing useful', isCorrect: false },
@@ -266,7 +271,7 @@ const LearningPage = () => {
       },
       {
         id: 2,
-        text: `How would you rate your understanding of "${lessonTitle}"?`,
+        question: `How would you rate your understanding of "${lessonTitle}"?`,
         options: [
           { id: 'A', text: 'I understand it well', isCorrect: true },
           { id: 'B', text: 'I need more practice', isCorrect: true },
@@ -276,14 +281,6 @@ const LearningPage = () => {
         explanation: 'Both understanding well and needing more practice are good responses - learning is a process!'
       }
     ];
-    
-    // Set the fallback questions
-    setCurrentStep('quiz');
-    setTutorState({
-      name: 'AI Tutor',
-      mood: 'excited',
-      message: 'Here\'s a quick quiz to check your understanding! 📝'
-    });
   };
 
   const handleQuizComplete = async (result) => {
@@ -660,23 +657,31 @@ const LearningPage = () => {
 
           {currentStep === 'quiz' && questions.length > 0 && (
             <div className="p-6">
-              <InteractiveQuiz
-                questions={questions}
-                onComplete={handleQuizComplete}
-              />
-            </div>
-          )}
-
-          {currentStep === 'quiz' && questions.length === 0 && (
-            <div className="p-6 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Preparing your quiz questions...</p>
-              <button 
-                onClick={() => setCurrentStep('content')}
-                className="mt-4 text-blue-600 hover:text-blue-800 text-sm underline"
-              >
-                Go back to lesson
-              </button>
+              {quizQuestions.length > 0 ? (
+                <InteractiveQuiz
+                  questions={quizQuestions}
+                  onComplete={handleQuizComplete}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Preparing your quiz questions...</p>
+                  <button 
+                    onClick={() => {
+                      const fallbackQuestions = createFallbackQuiz(subtopic.lessons[currentLessonIndex]);
+                      setQuizQuestions(fallbackQuestions);
+                      setTutorState({
+                        name: 'AI Tutor',
+                        mood: 'excited',
+                        message: 'Here\'s a quick quiz to check your understanding! 📝'
+                      });
+                    }}
+                    className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    Start Simple Quiz
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

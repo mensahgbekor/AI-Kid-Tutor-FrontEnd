@@ -79,6 +79,8 @@ export const generateLearningContent = async (topic, ageGroup, difficulty = 'beg
 // Generate quiz questions
 export const generateQuizQuestions = async (subject, topic, difficulty = 'beginner', questionCount = 5) => {
   try {
+    console.log('Generating quiz for:', { subject, topic, difficulty, questionCount });
+    
     const model = getModel();
     
     const prompt = `
@@ -112,12 +114,19 @@ export const generateQuizQuestions = async (subject, topic, difficulty = 'beginn
     const response = await result.response;
     const text = response.text();
     
-    console.log('AI Quiz Response:', text);
+    console.log('AI Quiz Response (first 500 chars):', text.substring(0, 500));
     
     // Parse JSON response
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      try {
+        const parsedQuestions = JSON.parse(jsonMatch[0]);
+        console.log('Successfully parsed questions:', parsedQuestions.length);
+        return parsedQuestions;
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        throw new Error('Failed to parse quiz questions');
+      }
     }
     
     // Fallback: Try to extract questions from text format
@@ -141,7 +150,7 @@ const generateFallbackQuestions = (subject, topic, count) => {
   for (let i = 1; i <= Math.min(count, 3); i++) {
     questions.push({
       id: i,
-      question: `What is an important concept you learned about ${topic} in ${subject}?`,
+      question: `What is an important concept about ${topic} in ${subject}?`,
       options: [
         { id: 'A', text: 'Key concepts and principles', isCorrect: true },
         { id: 'B', text: 'Nothing important', isCorrect: false },
@@ -167,14 +176,14 @@ const extractQuestionsFromText = (text, count) => {
     matches.slice(0, count).forEach((match, index) => {
       questions.push({
         id: index + 1,
-        question: match.replace(/^\d+\.?\s*/, ''),
+        question: match.replace(/^\d+\.?\s*/, '').trim(),
         options: [
-          { id: 'A', text: 'Option A', isCorrect: true },
-          { id: 'B', text: 'Option B', isCorrect: false },
-          { id: 'C', text: 'Option C', isCorrect: false },
-          { id: 'D', text: 'Option D', isCorrect: false }
+          { id: 'A', text: 'This is correct', isCorrect: true },
+          { id: 'B', text: 'This is not correct', isCorrect: false },
+          { id: 'C', text: 'This is also not correct', isCorrect: false },
+          { id: 'D', text: 'This is definitely not correct', isCorrect: false }
         ],
-        explanation: 'This is a basic explanation for the question.'
+        explanation: 'Great job! You\'re learning well.'
       });
     });
   }

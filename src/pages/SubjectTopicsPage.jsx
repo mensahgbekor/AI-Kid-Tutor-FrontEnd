@@ -72,6 +72,12 @@ const SubjectTopicsPage = () => {
   };
 
   const handleTopicClick = (subtopic) => {
+    if (!user) {
+      console.error('No user found, redirecting to subjects');
+      navigate('/subjects');
+      return;
+    }
+    
     navigate(`/learning/${subjectId}/${subtopic.id}`, { 
       state: { 
         subjectId: subject.id,

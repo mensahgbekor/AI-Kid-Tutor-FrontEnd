@@ -17,8 +17,14 @@ const InteractiveQuiz = ({ questions, onComplete }) => {
   // Safety check for questions
   if (!questions || questions.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-600">No quiz questions available. Please try again.</p>
+      <div className="bg-white rounded-2xl shadow-md p-6 text-center">
+        <div className="text-gray-400 mb-4">
+          <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <span className="text-2xl">❓</span>
+          </div>
+        </div>
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">Quiz Loading</h3>
+        <p className="text-gray-600 mb-4">Preparing your quiz questions...</p>
       </div>
     );
   }
@@ -108,7 +114,12 @@ const InteractiveQuiz = ({ questions, onComplete }) => {
 
   // Safety check for current question
   if (!currentQuestion) {
-    return <div className="text-center py-8">Loading question...</div>;
+    return (
+      <div className="bg-white rounded-2xl shadow-md p-6 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading question...</p>
+      </div>
+    );
   }
 
   return (
@@ -131,10 +142,10 @@ const InteractiveQuiz = ({ questions, onComplete }) => {
         animate={{ x: 0, opacity: 1 }}
         className="mb-6"
       >
-        <p className="text-lg font-semibold mb-4">{currentQuestion.text || currentQuestion.question}</p>
+        <p className="text-lg font-semibold mb-4">{currentQuestion.question || currentQuestion.text}</p>
 
         <div className="space-y-3">
-          {currentQuestion.options.map((option) => {
+          {(currentQuestion.options || []).map((option) => {
             const isSelected = selectedOption === option.id;
             const showResult = showExplanation && isSelected;
             const isCorrect = showResult && option.isCorrect;
