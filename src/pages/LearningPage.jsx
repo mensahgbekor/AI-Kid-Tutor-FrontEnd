@@ -13,13 +13,21 @@ import {
   Lightbulb,
   Trophy,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Lock,
+  RotateCcw
 } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 import { useAIContent, useAIQuiz } from '../hooks/useAI';
 import InteractiveQuiz from '../components/InteractiveQuiz';
 import TutorAvatar from '../components/TutorAvatar';
 import AITutorChat from '../components/AITutorChat';
-import { learningService, quizService } from '../services/supabase';
+import { 
+  learningService, 
+  quizService, 
+  lessonProgressService, 
+  subjectProgressService 
+} from '../services/supabase';
 
 const LearningPage = () => {
   const { subjectId, subtopicId } = useParams();
@@ -30,9 +38,10 @@ const LearningPage = () => {
   
   const [currentStep, setCurrentStep] = useState('lessons'); // 'lessons', 'content', 'quiz', 'complete'
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
-  const [completedLessons, setCompletedLessons] = useState([]);
+  const [lessonProgress, setLessonProgress] = useState([]);
   const [showAIChat, setShowAIChat] = useState(false);
   const [sessionId, setSessionId] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [tutorState, setTutorState] = useState({
     name: 'AI Tutor',
     mood: 'happy',
@@ -48,9 +57,25 @@ const LearningPage = () => {
       return;
     }
 
-    // Create learning session
-    createLearningSession();
+    initializeLearning();
   }, [subject, subtopic, child, navigate]);
+
+  const initializeLearning = async () => {
+    try {
+      setLoading(true);
+      
+      // Create learning session
+      await createLearningSession();
+      
+      // Load lesson progress
+      await loadLessonProgress();
+      
+    } catch (error) {
+      console.error('Error initializing learning:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const createLearningSession = async () => {
     try {
@@ -59,10 +84,12 @@ const LearningPage = () => {
         session_type: 'lesson',
         subject: subject.title,
         topic: subtopic.title,
+        subtopic_id: subtopic.id,
         difficulty_level: subtopic.difficulty.toLowerCase(),
         session_data: {
           subtopic_id: subtopic.id,
-          total_lessons: subtopic.lessons.length
+          total_lessons: subtopic.lessons.length,
+          subject_id: subject.id
         }
       };
 
@@ -73,10 +100,66 @@ const LearningPage = () => {
     }
   };
 
+  const loadLessonProgress = async () => {
+    try {
+      const progress = await lessonProgressService.getLessonProgress(
+        child.id, 
+        subject.id, 
+        subtopic.id
+      );
+      
+      setLessonProgress(progress);
+      
+      // Find the first incomplete lesson or start from beginning
+      const firstIncomplete = progress.findIndex(p => p.status !== 'completed');
+      if (firstIncomplete !== -1) {
+        setCurrentLessonIndex(firstIncomplete);
+      }
+    } catch (error) {
+      console.error('Error loading lesson progress:', error);
+      setLessonProgress([]);
+    }
+  };
+
+  const getLessonStatus = (lessonIndex) => {
+    const progress = lessonProgress.find(p => p.lesson_id === lessonIndex.toString());
+    return progress?.status || 'not_started';
+  };
+
+  const isLessonLocked = (lessonIndex) => {
+    if (lessonIndex === 0) return false; // First lesson is always unlocked
+    
+    // Check if previous lesson is completed
+    const previousProgress = lessonProgress.find(p => p.lesson_id === (lessonIndex - 1).toString());
+    return !previousProgress || previousProgress.status !== 'completed';
+  };
+
   const handleLessonClick = async (lessonIndex) => {
+    if (isLessonLocked(lessonIndex)) return;
+    
     const lesson = subtopic.lessons[lessonIndex];
     setCurrentLessonIndex(lessonIndex);
     setCurrentStep('content');
+
+    // Update lesson progress to in_progress
+    try {
+      await lessonProgressService.updateLessonProgress(
+        child.id,
+        subject.id,
+        subtopic.id,
+        lessonIndex.toString(),
+        {
+          lesson_title: lesson,
+          status: 'in_progress',
+          completion_percentage: 0
+        }
+      );
+      
+      // Refresh progress
+      await loadLessonProgress();
+    } catch (error) {
+      console.error('Error updating lesson progress:', error);
+    }
 
     setTutorState({
       name: 'AI Tutor',
@@ -85,7 +168,7 @@ const LearningPage = () => {
     });
 
     try {
-      const prompt = `${lesson} in ${subtopic.title} for ${subject.title}`;
+      const prompt = `Create a comprehensive lesson about "${lesson}" in the context of ${subtopic.title} for ${subject.title}. This is for a ${child.age}-year-old child at ${subtopic.difficulty} level.`;
       await generateContent(prompt, `${child.age} years old`, subtopic.difficulty.toLowerCase());
       
       setTutorState({
@@ -135,6 +218,8 @@ const LearningPage = () => {
         session_id: sessionId,
         child_id: child.id,
         quiz_type: subtopic.title,
+        subject: subject.title,
+        topic: subtopic.title,
         total_questions: result.totalQuestions,
         correct_answers: result.correctAnswers,
         score_percentage: result.score,
@@ -146,22 +231,35 @@ const LearningPage = () => {
       await quizService.saveQuizResult(quizData);
 
       // Mark lesson as completed
-      const newCompletedLessons = [...completedLessons, currentLessonIndex];
-      setCompletedLessons(newCompletedLessons);
+      await lessonProgressService.completeLessson(
+        child.id,
+        subject.id,
+        subtopic.id,
+        currentLessonIndex.toString(),
+        result.score
+      );
+
+      // Update subject progress
+      await updateSubjectProgress();
 
       // Update learning session
       if (sessionId) {
-        const completionPercentage = Math.round((newCompletedLessons.length / subtopic.lessons.length) * 100);
+        const completedLessons = lessonProgress.filter(p => p.status === 'completed').length + 1;
+        const completionPercentage = Math.round((completedLessons / subtopic.lessons.length) * 100);
+        
         await learningService.updateLearningSession(sessionId, {
           completion_percentage: completionPercentage,
           points_earned: result.score,
           session_data: {
             ...subtopic,
-            completed_lessons: newCompletedLessons,
+            completed_lessons: completedLessons,
             current_lesson: currentLessonIndex
           }
         });
       }
+
+      // Refresh progress
+      await loadLessonProgress();
 
       setCurrentStep('complete');
       
@@ -189,6 +287,37 @@ const LearningPage = () => {
     }
   };
 
+  const updateSubjectProgress = async () => {
+    try {
+      const completedLessons = lessonProgress.filter(p => p.status === 'completed').length + 1;
+      const totalLessons = subtopic.lessons.length;
+      const completionPercentage = Math.round((completedLessons / totalLessons) * 100);
+      
+      // Calculate average score
+      const completedWithScores = lessonProgress.filter(p => p.quiz_score !== null);
+      const averageScore = completedWithScores.length > 0 
+        ? Math.round(completedWithScores.reduce((sum, p) => sum + p.quiz_score, 0) / completedWithScores.length)
+        : 0;
+
+      await subjectProgressService.updateSubjectProgress(
+        child.id,
+        subject.id,
+        subtopic.id,
+        {
+          subject_title: subject.title,
+          subtopic_title: subtopic.title,
+          total_lessons: totalLessons,
+          completed_lessons: completedLessons,
+          completion_percentage: completionPercentage,
+          average_score: averageScore,
+          current_difficulty: subtopic.difficulty.toLowerCase()
+        }
+      );
+    } catch (error) {
+      console.error('Error updating subject progress:', error);
+    }
+  };
+
   const handleNextLesson = () => {
     if (currentLessonIndex < subtopic.lessons.length - 1) {
       setCurrentLessonIndex(currentLessonIndex + 1);
@@ -201,7 +330,7 @@ const LearningPage = () => {
         message: `Amazing! You've completed all lessons in ${subtopic.title}! You're a superstar! 🌟🎊`
       });
       
-      // Navigate back to topics or show completion
+      // Navigate back to topics after celebration
       setTimeout(() => {
         navigate(`/subjects/${subjectId}`, { state: { child } });
       }, 3000);
@@ -211,6 +340,21 @@ const LearningPage = () => {
   const handleRetryLesson = () => {
     setCurrentStep('content');
   };
+
+  const getCompletedLessonsCount = () => {
+    return lessonProgress.filter(p => p.status === 'completed').length;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your learning journey...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!subject || !subtopic || !child) {
     return <div>Loading...</div>;
@@ -255,7 +399,7 @@ const LearningPage = () => {
                 </span>
                 <span className="flex items-center space-x-1">
                   <Trophy className="w-4 h-4" />
-                  <span>{completedLessons.length}/{subtopic.lessons.length} Complete</span>
+                  <span>{getCompletedLessonsCount()}/{subtopic.lessons.length} Complete</span>
                 </span>
               </div>
             </div>
@@ -279,9 +423,11 @@ const LearningPage = () => {
 
               <div className="grid gap-4">
                 {subtopic.lessons.map((lesson, index) => {
-                  const isCompleted = completedLessons.includes(index);
-                  const isCurrent = index === currentLessonIndex;
-                  const isLocked = index > 0 && !completedLessons.includes(index - 1) && !isCompleted;
+                  const status = getLessonStatus(index);
+                  const isCompleted = status === 'completed';
+                  const isInProgress = status === 'in_progress';
+                  const isLocked = isLessonLocked(index);
+                  const progress = lessonProgress.find(p => p.lesson_id === index.toString());
 
                   return (
                     <motion.div
@@ -289,14 +435,14 @@ const LearningPage = () => {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                      className={`p-4 rounded-lg border-2 transition-all duration-200 ${
                         isCompleted 
                           ? 'border-green-200 bg-green-50' 
                           : isLocked
                             ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
-                            : isCurrent
-                              ? 'border-blue-300 bg-blue-50'
-                              : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
+                            : isInProgress
+                              ? 'border-blue-300 bg-blue-50 cursor-pointer'
+                              : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50 cursor-pointer'
                       }`}
                       onClick={() => !isLocked && handleLessonClick(index)}
                     >
@@ -307,22 +453,47 @@ const LearningPage = () => {
                               ? 'bg-green-500 text-white' 
                               : isLocked
                                 ? 'bg-gray-300 text-gray-500'
-                                : 'bg-blue-500 text-white'
+                                : isInProgress
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-gray-400 text-white'
                           }`}>
-                            {isCompleted ? <CheckCircle size={16} /> : index + 1}
+                            {isCompleted ? (
+                              <CheckCircle size={16} />
+                            ) : isLocked ? (
+                              <Lock size={16} />
+                            ) : (
+                              index + 1
+                            )}
                           </div>
                           <div>
                             <h3 className="font-semibold text-gray-800">{lesson}</h3>
-                            <p className="text-sm text-gray-600">
-                              {isCompleted ? 'Completed' : isLocked ? 'Locked' : 'Ready to start'}
-                            </p>
+                            <div className="flex items-center space-x-4 text-sm text-gray-600">
+                              <span>
+                                {isCompleted ? 'Completed' : 
+                                 isLocked ? 'Locked' : 
+                                 isInProgress ? 'In Progress' : 'Ready to start'}
+                              </span>
+                              {progress?.completion_percentage > 0 && !isCompleted && (
+                                <span>{progress.completion_percentage}% complete</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          {isCompleted && (
+                          {isCompleted && progress?.quiz_score && (
                             <div className="flex items-center space-x-1">
+                              <span className="text-sm font-medium text-green-600">
+                                {progress.quiz_score}%
+                              </span>
                               {[1, 2, 3].map((star) => (
-                                <Star key={star} className="w-4 h-4 text-yellow-400 fill-current" />
+                                <Star 
+                                  key={star} 
+                                  className={`w-4 h-4 ${
+                                    progress.quiz_score >= star * 30 
+                                      ? 'text-yellow-400 fill-current' 
+                                      : 'text-gray-300'
+                                  }`} 
+                                />
                               ))}
                             </div>
                           )}
@@ -423,9 +594,10 @@ const LearningPage = () => {
                   <>
                     <button
                       onClick={handleRetryLesson}
-                      className="bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all duration-300"
+                      className="bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all duration-300 flex items-center space-x-2"
                     >
-                      Review Lesson
+                      <RotateCcw className="w-5 h-5" />
+                      <span>Review Lesson</span>
                     </button>
                     <button
                       onClick={handleNextLesson}

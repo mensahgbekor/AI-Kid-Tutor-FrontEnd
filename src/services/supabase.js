@@ -524,6 +524,103 @@ export const screenTimeService = {
   }
 };
 
+// Lesson Progress Services
+export const lessonProgressService = {
+  // Get lesson progress for child
+  async getLessonProgress(childId, subjectId, subtopicId) {
+    const { data, error } = await supabase
+      .from('lesson_progress')
+      .select('*')
+      .eq('child_id', childId)
+      .eq('subject_id', subjectId)
+      .eq('subtopic_id', subtopicId)
+      .order('lesson_id');
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Update lesson progress
+  async updateLessonProgress(childId, subjectId, subtopicId, lessonId, progressData) {
+    const { data, error } = await supabase
+      .from('lesson_progress')
+      .upsert({
+        child_id: childId,
+        subject_id: subjectId,
+        subtopic_id: subtopicId,
+        lesson_id: lessonId,
+        ...progressData,
+        last_accessed_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  // Mark lesson as completed
+  async completeLessson(childId, subjectId, subtopicId, lessonId, quizScore = null) {
+    const { data, error } = await supabase
+      .from('lesson_progress')
+      .upsert({
+        child_id: childId,
+        subject_id: subjectId,
+        subtopic_id: subtopicId,
+        lesson_id: lessonId,
+        status: 'completed',
+        completion_percentage: 100,
+        quiz_score: quizScore,
+        completed_at: new Date().toISOString(),
+        last_accessed_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  }
+};
+
+// Subject Progress Services
+export const subjectProgressService = {
+  // Get subject progress
+  async getSubjectProgress(childId, subjectId, subtopicId = null) {
+    let query = supabase
+      .from('subject_progress')
+      .select('*')
+      .eq('child_id', childId)
+      .eq('subject_id', subjectId);
+    
+    if (subtopicId) {
+      query = query.eq('subtopic_id', subtopicId);
+    }
+    
+    const { data, error } = await query.single();
+    
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+  },
+
+  // Update subject progress
+  async updateSubjectProgress(childId, subjectId, subtopicId, progressData) {
+    const { data, error } = await supabase
+      .from('subject_progress')
+      .upsert({
+        child_id: childId,
+        subject_id: subjectId,
+        subtopic_id: subtopicId,
+        ...progressData,
+        last_accessed_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  }
+};
+
 // Real-time subscriptions
 export const realtimeService = {
   // Subscribe to child's learning sessions
