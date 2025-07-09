@@ -596,10 +596,10 @@ export const subjectProgressService = {
       query = query.eq('subtopic_id', subtopicId);
     }
     
-    const { data, error } = await query.single();
+    const { data, error } = await query.limit(1);
     
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    if (error) throw error;
+    return data && data.length > 0 ? data[0] : null;
   },
 
   // Update subject progress
