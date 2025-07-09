@@ -181,9 +181,6 @@ const extractQuestionsFromText = (text, count) => {
   
   return questions;
 };
-    throw new Error('Failed to generate quiz questions');
-  }
-};
 
 // Analyze learning performance and provide recommendations
 export const analyzePerformance = async (childProfile, recentSessions, quizResults) => {
