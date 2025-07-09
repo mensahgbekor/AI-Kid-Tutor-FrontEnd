@@ -1,14 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, Star, Trophy, Clock, Play, Users, TrendingUp, Award } from 'lucide-react';
 
 const Dashboard = () => {
-  const [activeChild, setActiveChild] = useState('Emma');
+  const [currentUser, setCurrentUser] = useState(null);
   const [currentLesson, setCurrentLesson] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const children = [
-    { name: 'Emma', age: 8, level: 'Beginner', progress: 75, avatar: '👧' },
-    { name: 'Alex', age: 10, level: 'Intermediate', progress: 60, avatar: '👦' }
-  ];
+  useEffect(() => {
+    loadCurrentUser();
+  }, []);
+
+  const loadCurrentUser = () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userEmail = localStorage.getItem('userEmail');
+      const userName = localStorage.getItem('userName');
+      
+      if (!token || !userEmail) {
+        window.location.href = '/login';
+        return;
+      }
+      
+      const userData = {
+        id: userEmail,
+        name: userName || userEmail.split('@')[0],
+        email: userEmail,
+        level: 'Beginner',
+        progress: 75,
+        avatar: userName?.charAt(0).toUpperCase() || '?'
+      };
+      
+      setCurrentUser(userData);
+    } catch (error) {
+      console.error('Error loading user:', error);
+      window.location.href = '/login';
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const lessons = [
     { id: 1, title: 'What is AI?', duration: '15 min', difficulty: 'Easy', completed: true, stars: 3 },
@@ -31,7 +60,32 @@ const Dashboard = () => {
     { label: 'Time Spent', value: '4.2 hrs', icon: Clock, color: 'bg-purple-500' }
   ];
 
-  const child = children.find(c => c.name === activeChild);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Please sign in to access your dashboard</p>
+          <button
+            onClick={() => window.location.href = '/login'}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6">
@@ -40,25 +94,21 @@ const Dashboard = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="text-4xl">{child.avatar}</div>
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                {currentUser.avatar}
+              </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">Welcome back, {child.name}!</h1>
+                <h1 className="text-3xl font-bold text-gray-800">Welcome back, {currentUser.name}!</h1>
                 <p className="text-gray-600">Ready to explore AI today?</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <select 
-                value={activeChild} 
-                onChange={(e) => setActiveChild(e.target.value)}
-                className="bg-blue-100 border border-blue-300 rounded-lg px-4 py-2 text-blue-800 font-medium"
-              >
-                {children.map(child => (
-                  <option key={child.name} value={child.name}>{child.name}</option>
-                ))}
-              </select>
+              <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg font-medium">
+                {currentUser.email}
+              </div>
               <div className="text-right">
-                <div className="text-sm text-gray-500">Level: {child.level}</div>
-                <div className="text-lg font-bold text-blue-600">{child.progress}% Complete</div>
+                <div className="text-sm text-gray-500">Level: {currentUser.level}</div>
+                <div className="text-lg font-bold text-blue-600">{currentUser.progress}% Complete</div>
               </div>
             </div>
           </div>
@@ -90,10 +140,10 @@ const Dashboard = () => {
               <div className="bg-gray-200 rounded-full h-4 mb-2">
                 <div 
                   className="bg-gradient-to-r from-blue-500 to-purple-500 h-4 rounded-full transition-all duration-500"
-                  style={{ width: `${child.progress}%` }}
+                  style={{ width: `${currentUser.progress}%` }}
                 ></div>
               </div>
-              <p className="text-sm text-gray-600">{child.progress}% of AI Basics completed</p>
+              <p className="text-sm text-gray-600">{currentUser.progress}% of AI Basics completed</p>
             </div>
 
             {/* Available Lessons */}
