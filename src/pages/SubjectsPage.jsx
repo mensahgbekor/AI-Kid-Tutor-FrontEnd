@@ -130,10 +130,11 @@ const SubjectsPage = () => {
     });
   };
 
-
+  return (
+    <div>
       {/* AI Tutor Chat Modal */}
       <AITutorChat
-        subjectId: subject.id,
+        subjectId={subject.id}
         childProfile={selectedChild}
         onClose={() => setShowAIChat(false)}
       />
