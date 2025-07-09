@@ -541,15 +541,11 @@ const LearningPage = () => {
               ) : content ? (
                 <div className="prose max-w-none">
                   <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-6">
-                    <div 
-                      className="text-gray-800 leading-relaxed whitespace-pre-wrap"
-                      dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br>') }}
-                    />
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <button 
-                      onClick={() => setCurrentStep('lessons')}
+                    <div className="text-gray-800 leading-relaxed">
+                      <ReactMarkdown
+                        className="prose prose-lg max-w-none"
+                        children={content}
+                      />
                       className="text-gray-600 hover:text-gray-800 transition-colors flex items-center space-x-2"
                     >
                       <ChevronLeft className="w-5 h-5" />
