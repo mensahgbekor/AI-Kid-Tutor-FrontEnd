@@ -33,19 +33,39 @@ const SubjectsPage = () => {
 
   const checkAuthAndLoadChildren = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Check for token-based authentication first
+      const token = localStorage.getItem('token');
       
-      if (!user) {
-        // Redirect to login or show auth prompt
+      if (!token) {
+        console.log('No token found, redirecting to login');
         navigate('/login');
         return;
       }
       
-      setUser(user);
-      await loadChildren(user);
+      // Try to get Supabase user, but don't redirect if it fails
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setUser(user);
+          await loadChildren(user);
+        } else {
+          // If no Supabase user but we have a token, create a mock user for now
+          console.log('Token exists but no Supabase user found');
+          // For now, show empty state instead of redirecting
+          setChildren([]);
+        }
+      } catch (supabaseError) {
+        console.log('Supabase auth error:', supabaseError);
+        // If Supabase fails but we have a token, show empty state
+        setChildren([]);
+      }
     } catch (error) {
       console.error('Error checking auth:', error);
-      navigate('/login');
+      // Only redirect if no token exists
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
@@ -53,6 +73,11 @@ const SubjectsPage = () => {
 
   const loadChildren = async (user) => {
     try {
+      if (!user) {
+        console.log('No user provided to loadChildren');
+        return;
+      }
+
       // Get user profile first
       const { data: userProfile } = await supabase
         .from('user_profiles')
@@ -215,12 +240,14 @@ const SubjectsPage = () => {
               <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
                 <Plus className="w-8 h-8 text-gray-400" />
               </div>
-              <p className="text-gray-600 mb-4">No children found in your account.</p>
+              <p className="text-gray-600 mb-4">
+                {user ? 'No children found in your account.' : 'Please set up your profile and add children to continue.'}
+              </p>
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => user ? navigate('/dashboard') : navigate('/register')}
                 className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
               >
-                Add a Child Profile
+                {user ? 'Add a Child Profile' : 'Complete Setup'}
               </button>
             </div>
           )}
