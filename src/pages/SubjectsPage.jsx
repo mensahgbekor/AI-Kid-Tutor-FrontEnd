@@ -89,7 +89,6 @@ const SubjectsPage = () => {
     
     navigate(`/subjects/${subject.id}`, { 
       state: { 
-        subject, 
         child: getChildProfile()
       } 
     });
