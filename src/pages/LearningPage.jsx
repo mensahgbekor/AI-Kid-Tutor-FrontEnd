@@ -16,13 +16,18 @@ import { useAIContent, useAIQuiz } from '../hooks/useAI';
 import InteractiveQuiz from '../components/InteractiveQuiz';
 import TutorAvatar from '../components/TutorAvatar';
 import AITutorChat from '../components/AITutorChat';
+import { subjects } from '../data/subjects';
 
 const LearningPage = () => {
   const { subjectId } = useParams();
   const location = useLocation();
+  const { subjectId } = useParams();
   const navigate = useNavigate();
   
-  const { subject, child } = location.state || {};
+  const { child } = location.state || {};
+  
+  // Get subject from shared data using the ID
+  const subject = subjects.find(s => s.id === subjectId);
   
   const [currentStep, setCurrentStep] = useState('content'); // 'content', 'quiz', 'complete'
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -37,7 +42,7 @@ const LearningPage = () => {
   const { questions, loading: quizLoading, generateQuiz } = useAIQuiz();
 
   useEffect(() => {
-    if (!subject || !child) {
+    if (!subject) {
       navigate('/subjects');
       return;
     }
@@ -46,7 +51,7 @@ const LearningPage = () => {
     if (subject.topics && subject.topics.length > 0) {
       setSelectedTopic(subject.topics[0]);
     }
-  }, [subject, child, navigate]);
+  }, [subject, navigate]);
 
   useEffect(() => {
     if (selectedTopic && child) {
