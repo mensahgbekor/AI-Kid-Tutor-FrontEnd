@@ -74,8 +74,8 @@ const SubjectTopicsPage = () => {
   const handleTopicClick = (subtopic) => {
     navigate(`/learning/${subjectId}/${subtopic.id}`, { 
       state: { 
-        subject, 
-        subtopic,
+        subjectId: subject.id,
+        subtopicId: subtopic.id,
         child 
       } 
     });

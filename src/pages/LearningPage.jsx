@@ -20,6 +20,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { useAIContent, useAIQuiz } from '../hooks/useAI';
 import InteractiveQuiz from '../components/InteractiveQuiz';
+import { subjects } from '../data/subjects';
 import TutorAvatar from '../components/TutorAvatar';
 import AITutorChat from '../components/AITutorChat';
 import { 
@@ -34,7 +35,11 @@ const LearningPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const { subject, subtopic, child } = location.state || {};
+  const { subjectId: stateSubjectId, subtopicId: stateSubtopicId, child } = location.state || {};
+  
+  // Get subject and subtopic from local data using IDs
+  const subject = subjects.find(s => s.id === (stateSubjectId || subjectId));
+  const subtopic = subject?.subtopics.find(st => st.id === (stateSubtopicId || subtopicId));
   
   const [currentStep, setCurrentStep] = useState('lessons'); // 'lessons', 'content', 'quiz', 'complete'
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);

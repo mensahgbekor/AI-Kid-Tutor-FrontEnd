@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { v4 as uuidv4 } from 'uuid';
 import { 
   Brain, 
   BookOpen, 
@@ -23,7 +24,7 @@ const SubjectsPage = () => {
 
   // Child profile based on selected age
   const getChildProfile = () => ({
-    id: 1, 
+    id: uuidv4(), 
     name: 'Student', 
     age: selectedAge || 8, 
     avatar: '👤',
