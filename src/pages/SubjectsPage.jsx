@@ -56,7 +56,7 @@ const SubjectsPage = () => {
       
       const mongoUserData = {
         email: userEmail,
-        name: userName || 'User'
+        name: userName || ''
       };
       setMongoUser(mongoUserData);
       

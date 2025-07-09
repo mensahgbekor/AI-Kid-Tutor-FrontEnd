@@ -24,7 +24,8 @@ export const apiLogin = async (payload) => {
       status: response.status,
       data: {
         token: token,
-        email: payload.email,
+        user: response.data.user || response.data, // Include full user data
+        email: payload.email
       },
     };
   } catch (error) {
