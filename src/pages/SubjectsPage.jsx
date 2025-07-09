@@ -47,7 +47,9 @@ const SubjectsPage = () => {
       const userName = localStorage.getItem('userName');
       
       if (!userEmail) {
-        console.log('No user email found, redirecting to login');
+        console.log('No user email found, but token exists - this might be an old session');
+        // Clear the token and redirect to login
+        localStorage.removeItem('token');
         navigate('/login');
         return;
       }
@@ -73,6 +75,8 @@ const SubjectsPage = () => {
       if (!token) {
         navigate('/login');
       }
+        // If we have a token but still error, show empty state
+        setChildren([]);
     } finally {
       setLoading(false);
     }

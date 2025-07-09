@@ -53,6 +53,8 @@ const LoginForm = () => {
       })
 
       localStorage.setItem("token", data.token)
+      localStorage.setItem("userEmail", form.email)
+      localStorage.setItem("userName", data.name || form.email.split('@')[0])
       setMessage({ text: "Login successful! Redirecting...", type: "success" })
       
       setTimeout(() => {

@@ -17,7 +17,13 @@ const HeroSection = () => {
   }, []);
 
   const handleStartFreeTrial = () => {
-    window.location.href = '/register';
+    // Check if user is already logged in
+    const token = localStorage.getItem('token');
+    if (token) {
+      window.location.href = '/subjects';
+    } else {
+      window.location.href = '/register';
+    }
   };
 
   return (
@@ -61,7 +67,7 @@ const HeroSection = () => {
                 Start Free Trial
               </button>
               <a
-                href="subjects"
+                href="/subjects"
                 className="border-2 border-gray-300 text-gray-700 px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:border-pink-500 hover:text-pink-500 transition-all duration-300"
               >
                 Explore Subjects

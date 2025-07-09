@@ -74,6 +74,8 @@ const NavBar = () => {
   const handleLogout = () => {
     // Clear auth data (matches your login code)
     localStorage.removeItem('token');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
     setIsLoggedIn(false);
     setShowDropdown(false);
     setIsMenuOpen(false);
