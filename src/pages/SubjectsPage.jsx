@@ -16,24 +16,22 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AITutorChat from '../components/AITutorChat';
-import { supabase, childService, parentService, userService } from '../services/supabase';
 
 const SubjectsPage = () => {
   const [showAIChat, setShowAIChat] = useState(false);
-  const [children, setChildren] = useState([]);
-  const [selectedChild, setSelectedChild] = useState(null);
-  const [showChildSelector, setShowChildSelector] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [mongoUser, setMongoUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkMongoAuthAndLoadChildren();
+    checkAuthAndLoadUser();
   }, []);
 
-  const checkMongoAuthAndLoadChildren = async () => {
+  const checkAuthAndLoadUser = async () => {
     try {
-      // Check for token-based authentication first
+      setLoading(true);
+      
+      // Check for token-based authentication
       const token = localStorage.getItem('token');
       
       if (!token) {
@@ -47,94 +45,31 @@ const SubjectsPage = () => {
       const userName = localStorage.getItem('userName');
       
       if (!userEmail) {
-        console.log('No user email found, but token exists - this might be an old session');
-        // Clear the token and redirect to login
+        console.log('No user email found, redirecting to login');
         localStorage.removeItem('token');
         navigate('/login');
         return;
       }
       
-      const mongoUserData = {
+      // Create user object from localStorage data
+      const userData = {
+        id: userEmail, // Use email as ID since it's unique
         email: userEmail,
-        name: userName || ''
+        name: userName || userEmail.split('@')[0], // Fallback to email prefix if no name
+        age: 8 // Default age, this should come from user profile in real implementation
       };
-      setMongoUser(mongoUserData);
       
-      // Try to load children from Supabase using email
-      try {
-        await loadChildrenByEmail(userEmail);
-      } catch (supabaseError) {
-        console.log('Supabase auth error:', supabaseError);
-        // If Supabase fails, show empty state (user needs to set up profile)
-        setChildren([]);
-      }
+      setCurrentUser(userData);
+      
     } catch (error) {
       console.error('Error checking auth:', error);
-      // Only redirect if no token exists
       const token = localStorage.getItem('token');
       if (!token) {
         navigate('/login');
       }
-        // If we have a token but still error, show empty state
-        setChildren([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadChildrenByEmail = async (email) => {
-    try {
-      if (!email) {
-        console.log('No email provided to loadChildrenByEmail');
-        return;
-      }
-
-      // Try to get user profile by email
-      let userProfile;
-      try {
-        userProfile = await userService.getUserProfileByEmail(email);
-      } catch (error) {
-        // User profile doesn't exist in Supabase yet
-        console.log('User profile not found in Supabase:', error);
-        return;
-      }
-
-      if (!userProfile) {
-        console.log('User profile not found in Supabase');
-        return;
-      }
-
-      // Try to get parent profile
-      let parentProfile;
-      try {
-        parentProfile = await parentService.getParentProfileByUserId(userProfile.id);
-      } catch (error) {
-        console.log('Parent profile not found:', error);
-        return;
-      }
-
-      if (!parentProfile) {
-        console.log('Parent profile not found');
-        return;
-      }
-
-      // Get children
-      const childrenData = await childService.getChildrenByParent(parentProfile.id);
-
-      setChildren(childrenData || []);
-      
-      if (childrenData && childrenData.length > 0) {
-        setSelectedChild(childrenData[0]);
-        setShowChildSelector(false);
-      }
-    } catch (error) {
-      console.error('Error loading children:', error);
-    }
-  };
-
-  const handleChildSelect = (child) => {
-    setSelectedChild(child);
-    setShowChildSelector(false);
   };
 
   const getAgeDescription = (age) => {
@@ -181,14 +116,14 @@ const SubjectsPage = () => {
   ];
 
   const handleSubjectClick = (subject) => {
-    if (!selectedChild) {
-      setShowChildSelector(true);
+    if (!currentUser) {
+      navigate('/login');
       return;
     }
     
     navigate(`/subjects/${subject.id}`, { 
       state: { 
-        child: selectedChild
+        child: currentUser // Pass current user as child data
       } 
     });
   };
@@ -204,8 +139,7 @@ const SubjectsPage = () => {
     );
   }
 
-  // Child Selection Modal
-  if (showChildSelector) {
+  if (!currentUser) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
@@ -213,64 +147,17 @@ const SubjectsPage = () => {
             <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center">
               <User className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Select a Child</h2>
-            <p className="text-gray-600">Choose which child will be learning today!</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Authentication Required</h2>
+            <p className="text-gray-600">Please sign in to access your learning dashboard</p>
           </div>
 
-          {children.length > 0 ? (
-            <div className="space-y-3 mb-6">
-              {children.map((child) => (
-                <button
-                  key={child.id}
-                  onClick={() => handleChildSelect(child)}
-                  className="w-full group relative bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-transparent hover:border-blue-300 rounded-xl p-4 transition-all duration-300 transform hover:scale-105 text-left"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      {child.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="text-lg font-bold text-gray-800">{child.name}</div>
-                      <div className="text-sm text-gray-600">
-                        Age {child.age} • {getAgeDescription(child.age)}
-                      </div>
-                      {child.grade_level && (
-                        <div className="text-xs text-gray-500">Grade {child.grade_level}</div>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <Plus className="w-8 h-8 text-gray-400" />
-              </div>
-              <p className="text-gray-600 mb-4">
-                {mongoUser ? 'No children found in your account.' : 'Please set up your profile and add children to continue.'}
-              </p>
-              <button
-                onClick={() => mongoUser ? navigate('/dashboard') : navigate('/login')}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
-              >
-                {mongoUser ? 'Complete Setup' : 'Sign In'}
-              </button>
-            </div>
-          )}
-
           <div className="text-center">
-            <p className="text-sm text-gray-500 mb-4">
-              You can switch between children anytime!
-            </p>
-            {selectedChild && (
-              <button
-                onClick={() => setShowChildSelector(false)}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-              >
-                Continue with {selectedChild.name}
-              </button>
-            )}
+            <button
+              onClick={() => navigate('/login')}
+              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
+            >
+              Sign In
+            </button>
           </div>
         </div>
       </div>
@@ -285,28 +172,20 @@ const SubjectsPage = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                {selectedChild?.name?.charAt(0).toUpperCase() || '?'}
+                {currentUser.name?.charAt(0).toUpperCase() || '?'}
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-800">Learning Subjects</h1>
                 <p className="text-gray-600">
-                  {selectedChild ? `${selectedChild.name}'s learning adventure awaits!` : 'Choose a subject to start learning!'}
+                  Welcome {currentUser.name}! Your learning adventure awaits!
                 </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              {selectedChild && (
-                <div className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-2">
-                  <User className="w-4 h-4" />
-                  <span>{selectedChild.name} (Age {selectedChild.age})</span>
-                  <button
-                    onClick={() => setShowChildSelector(true)}
-                    className="ml-2 text-blue-600 hover:text-blue-800 text-xs underline"
-                  >
-                    Change
-                  </button>
-                </div>
-              )}
+              <div className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-2">
+                <User className="w-4 h-4" />
+                <span>{currentUser.name}</span>
+              </div>
               <button
                 onClick={() => setShowAIChat(true)}
                 className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-300 flex items-center space-x-2"
@@ -322,10 +201,10 @@ const SubjectsPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">
-                  {selectedChild ? `${selectedChild.name} is ready to learn:` : 'Ready to learn:'}
+                  Ready to learn:
                 </p>
                 <p className="text-lg font-bold text-gray-800">
-                  {selectedChild ? `${getAgeDescription(selectedChild.age)} Level` : 'Core Subjects'}
+                  Core Subjects
                 </p>
               </div>
               <div className="text-right">
@@ -444,7 +323,7 @@ const SubjectsPage = () => {
 
       {/* AI Tutor Chat Modal */}
       <AITutorChat
-        childProfile={selectedChild}
+        childProfile={currentUser}
         isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
       />

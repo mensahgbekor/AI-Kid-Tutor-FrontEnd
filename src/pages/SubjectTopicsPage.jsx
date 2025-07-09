@@ -22,7 +22,7 @@ const SubjectTopicsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const { child } = location.state || {};
+  const { child: user } = location.state || {};
   const [showAIChat, setShowAIChat] = useState(false);
   const [topicProgress, setTopicProgress] = useState({});
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ const SubjectTopicsPage = () => {
       return;
     }
     
-    if (child) {
+    if (user) {
       loadTopicProgress();
     }
   }, [subject, navigate]);
@@ -50,7 +50,7 @@ const SubjectTopicsPage = () => {
       for (const subtopic of subject.subtopics) {
         try {
           const progress = await subjectProgressService.getSubjectProgress(
-            child.id, 
+            user.id, 
             subject.id, 
             subtopic.id
           );
@@ -76,7 +76,7 @@ const SubjectTopicsPage = () => {
       state: { 
         subjectId: subject.id,
         subtopicId: subtopic.id,
-        child 
+        child: user 
       } 
     });
   };
@@ -112,7 +112,7 @@ const SubjectTopicsPage = () => {
     return 'Not started';
   };
 
-  if (!subject || !child) {
+  if (!subject || !user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
@@ -169,7 +169,7 @@ const SubjectTopicsPage = () => {
                 </span>
                 <span className="flex items-center space-x-1">
                   <Target className="w-4 h-4" />
-                  <span>Age {child.age}</span>
+                  <span>{user.name}</span>
                 </span>
               </div>
             </div>
@@ -181,15 +181,17 @@ const SubjectTopicsPage = () => {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="text-3xl">{child.avatar}</div>
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                {user.name?.charAt(0).toUpperCase() || '?'}
+              </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-800">Learning Path for {child.name}</h3>
+                <h3 className="text-lg font-bold text-gray-800">Learning Path for {user.name}</h3>
                 <p className="text-gray-600">Choose a topic to start your {subject.title.toLowerCase()} journey!</p>
               </div>
             </div>
             <div className="text-right">
               <div className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium">
-                🎂 Age {child.age}
+                👤 {user.name}
               </div>
             </div>
           </div>
@@ -378,7 +380,7 @@ const SubjectTopicsPage = () => {
 
       {/* AI Tutor Chat Modal */}
       <AITutorChat
-        childProfile={child}
+        childProfile={user}
         isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
       />
