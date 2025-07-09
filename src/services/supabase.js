@@ -95,6 +95,17 @@ export const userService = {
     return data;
   },
 
+  // Get user profile by email (for MongoDB integration)
+  async getUserProfileByEmail(email) {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
   // Update user profile
   async updateUserProfile(userId, updates) {
     const { data, error } = await supabase
@@ -138,6 +149,17 @@ export const parentService = {
     return data;
   },
 
+  // Get parent profile by user ID (for MongoDB integration)
+  async getParentProfileByUserId(userId) {
+    const { data, error } = await supabase
+      .from('parent_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
   // Update parent profile
   async updateParentProfile(parentId, updates) {
     const { data, error } = await supabase

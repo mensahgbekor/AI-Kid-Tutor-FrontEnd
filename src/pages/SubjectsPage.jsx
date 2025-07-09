@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AITutorChat from '../components/AITutorChat';
-import { supabase } from '../services/supabase';
+import { supabase, childService, parentService, userService } from '../services/supabase';
 
 const SubjectsPage = () => {
   const [showAIChat, setShowAIChat] = useState(false);
@@ -24,14 +24,14 @@ const SubjectsPage = () => {
   const [selectedChild, setSelectedChild] = useState(null);
   const [showChildSelector, setShowChildSelector] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const [mongoUser, setMongoUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkAuthAndLoadChildren();
+    checkMongoAuthAndLoadChildren();
   }, []);
 
-  const checkAuthAndLoadChildren = async () => {
+  const checkMongoAuthAndLoadChildren = async () => {
     try {
       // Check for token-based authentication first
       const token = localStorage.getItem('token');
@@ -42,21 +42,28 @@ const SubjectsPage = () => {
         return;
       }
       
-      // Try to get Supabase user, but don't redirect if it fails
+      // Get user info from localStorage (set during MongoDB login)
+      const userEmail = localStorage.getItem('userEmail');
+      const userName = localStorage.getItem('userName');
+      
+      if (!userEmail) {
+        console.log('No user email found, redirecting to login');
+        navigate('/login');
+        return;
+      }
+      
+      const mongoUserData = {
+        email: userEmail,
+        name: userName || 'User'
+      };
+      setMongoUser(mongoUserData);
+      
+      // Try to load children from Supabase using email
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setUser(user);
-          await loadChildren(user);
-        } else {
-          // If no Supabase user but we have a token, create a mock user for now
-          console.log('Token exists but no Supabase user found');
-          // For now, show empty state instead of redirecting
-          setChildren([]);
-        }
+        await loadChildrenByEmail(userEmail);
       } catch (supabaseError) {
         console.log('Supabase auth error:', supabaseError);
-        // If Supabase fails but we have a token, show empty state
+        // If Supabase fails, show empty state (user needs to set up profile)
         setChildren([]);
       }
     } catch (error) {
@@ -71,48 +78,44 @@ const SubjectsPage = () => {
     }
   };
 
-  const loadChildren = async (user) => {
+  const loadChildrenByEmail = async (email) => {
     try {
-      if (!user) {
-        console.log('No user provided to loadChildren');
+      if (!email) {
+        console.log('No email provided to loadChildrenByEmail');
         return;
       }
 
-      // Get user profile first
-      const { data: userProfile } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('auth_user_id', user.id)
-        .single();
+      // Try to get user profile by email
+      let userProfile;
+      try {
+        userProfile = await userService.getUserProfileByEmail(email);
+      } catch (error) {
+        // User profile doesn't exist in Supabase yet
+        console.log('User profile not found in Supabase:', error);
+        return;
+      }
 
       if (!userProfile) {
-        console.error('User profile not found');
+        console.log('User profile not found in Supabase');
         return;
       }
 
-      // Get parent profile
-      const { data: parentProfile } = await supabase
-        .from('parent_profiles')
-        .select('id')
-        .eq('user_id', userProfile.id)
-        .single();
+      // Try to get parent profile
+      let parentProfile;
+      try {
+        parentProfile = await parentService.getParentProfileByUserId(userProfile.id);
+      } catch (error) {
+        console.log('Parent profile not found:', error);
+        return;
+      }
 
       if (!parentProfile) {
-        console.error('Parent profile not found');
+        console.log('Parent profile not found');
         return;
       }
 
       // Get children
-      const { data: childrenData, error } = await supabase
-        .from('child_profiles')
-        .select('*')
-        .eq('parent_id', parentProfile.id)
-        .eq('is_active', true);
-
-      if (error) {
-        console.error('Error loading children:', error);
-        return;
-      }
+      const childrenData = await childService.getChildrenByParent(parentProfile.id);
 
       setChildren(childrenData || []);
       
@@ -241,13 +244,13 @@ const SubjectsPage = () => {
                 <Plus className="w-8 h-8 text-gray-400" />
               </div>
               <p className="text-gray-600 mb-4">
-                {user ? 'No children found in your account.' : 'Please set up your profile and add children to continue.'}
+                {mongoUser ? 'No children found in your account.' : 'Please set up your profile and add children to continue.'}
               </p>
               <button
-                onClick={() => user ? navigate('/dashboard') : navigate('/register')}
+                onClick={() => mongoUser ? navigate('/dashboard') : navigate('/login')}
                 className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
               >
-                {user ? 'Add a Child Profile' : 'Complete Setup'}
+                {mongoUser ? 'Complete Setup' : 'Sign In'}
               </button>
             </div>
           )}
