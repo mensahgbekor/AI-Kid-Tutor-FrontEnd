@@ -72,7 +72,7 @@ const Sidebar = () => {
       icon: MessageCircle,
       path: '/chat',
       badge: '2'
-    }
+    },
     {
       id: 'analytics',
       label: 'Analytics',
