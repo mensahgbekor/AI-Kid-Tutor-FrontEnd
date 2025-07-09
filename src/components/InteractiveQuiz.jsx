@@ -13,6 +13,16 @@ const InteractiveQuiz = ({ questions, onComplete }) => {
   const [quizResult, setQuizResult] = useState(null);
 
   const currentQuestion = questions[currentQuestionIndex];
+  
+  // Safety check for questions
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-600">No quiz questions available. Please try again.</p>
+      </div>
+    );
+  }
+  
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
   const handleOptionSelect = (optionId) => {
@@ -23,6 +33,12 @@ const InteractiveQuiz = ({ questions, onComplete }) => {
 
   const handleSubmit = () => {
     if (!selectedOption) return;
+    
+    // Safety check for current question
+    if (!currentQuestion || !currentQuestion.options) {
+      console.error('Invalid question structure:', currentQuestion);
+      return;
+    }
 
     const isCorrect = currentQuestion.options.find(opt => opt.id === selectedOption)?.isCorrect || false;
     
@@ -90,6 +106,11 @@ const InteractiveQuiz = ({ questions, onComplete }) => {
     );
   }
 
+  // Safety check for current question
+  if (!currentQuestion) {
+    return <div className="text-center py-8">Loading question...</div>;
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -110,7 +131,7 @@ const InteractiveQuiz = ({ questions, onComplete }) => {
         animate={{ x: 0, opacity: 1 }}
         className="mb-6"
       >
-        <p className="text-lg font-semibold mb-4">{currentQuestion.text}</p>
+        <p className="text-lg font-semibold mb-4">{currentQuestion.text || currentQuestion.question}</p>
 
         <div className="space-y-3">
           {currentQuestion.options.map((option) => {
