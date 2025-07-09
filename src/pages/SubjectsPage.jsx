@@ -54,11 +54,22 @@ const SubjectsPage = () => {
       
       // Create user object from localStorage data
       const userData = {
-        id: userId || userEmail, // Use UUID if available, fallback to email
+        id: userId, // Only use UUID, no email fallback
         email: userEmail,
         name: userName || userEmail.split('@')[0], // Fallback to email prefix if no name
         age: 8 // Default age, this should come from user profile in real implementation
       };
+      
+      // Ensure we have a valid UUID before proceeding
+      if (!userId) {
+        console.log('No valid user ID found, clearing auth and redirecting to login');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userId');
+        navigate('/login');
+        return;
+      }
       
       setCurrentUser(userData);
       
