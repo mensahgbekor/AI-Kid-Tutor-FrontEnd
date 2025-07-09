@@ -13,6 +13,8 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
 import CoursesPage from "./pages/CoursesPage";
 import CourseDetailsPage from "./pages/CourseDetails";
+import SubjectsPage from "./pages/SubjectsPage";
+import LearningPage from "./pages/LearningPage";
 
 function App() {
   const router = createBrowserRouter([
@@ -26,6 +28,8 @@ function App() {
     { path: "contact", element: <ContactForm /> },
     {path: "courses", element: <CoursesPage />},
     {path: "/course/:courseId" , element: <CourseDetailsPage />},
+    {path: "subjects", element: <SubjectsPage />},
+    {path: "/learning/:subjectId", element: <LearningPage />},
     {
       path: "/dashboard",
       element: <DashboardLayout />,
