@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { v4 as uuidv4 } from 'uuid';
 import { 
   Brain, 
   BookOpen, 
@@ -11,39 +10,106 @@ import {
   Star,
   Clock,
   Trophy,
-  ChevronRight
+  ChevronRight,
+  User,
+  Plus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AITutorChat from '../components/AITutorChat';
+import { supabase } from '../services/supabase';
 
 const SubjectsPage = () => {
   const [showAIChat, setShowAIChat] = useState(false);
-  const [selectedAge, setSelectedAge] = useState(null);
-  const [showAgeSelector, setShowAgeSelector] = useState(true);
+  const [children, setChildren] = useState([]);
+  const [selectedChild, setSelectedChild] = useState(null);
+  const [showChildSelector, setShowChildSelector] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  // Child profile based on selected age
-  const getChildProfile = () => ({
-    id: uuidv4(), 
-    name: 'Student', 
-    age: selectedAge || 8, 
-    avatar: '👤',
-    interests: ['Learning', 'Discovery', 'Knowledge'],
-    learning_preferences: { visual: 50, auditory: 30, kinesthetic: 20 }
-  });
+  useEffect(() => {
+    checkAuthAndLoadChildren();
+  }, []);
 
-  const ages = [5, 6, 7, 8, 9, 10, 11, 12];
+  const checkAuthAndLoadChildren = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        // Redirect to login or show auth prompt
+        navigate('/login');
+        return;
+      }
+      
+      setUser(user);
+      await loadChildren(user);
+    } catch (error) {
+      console.error('Error checking auth:', error);
+      navigate('/login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadChildren = async (user) => {
+    try {
+      // Get user profile first
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .single();
+
+      if (!userProfile) {
+        console.error('User profile not found');
+        return;
+      }
+
+      // Get parent profile
+      const { data: parentProfile } = await supabase
+        .from('parent_profiles')
+        .select('id')
+        .eq('user_id', userProfile.id)
+        .single();
+
+      if (!parentProfile) {
+        console.error('Parent profile not found');
+        return;
+      }
+
+      // Get children
+      const { data: childrenData, error } = await supabase
+        .from('child_profiles')
+        .select('*')
+        .eq('parent_id', parentProfile.id)
+        .eq('is_active', true);
+
+      if (error) {
+        console.error('Error loading children:', error);
+        return;
+      }
+
+      setChildren(childrenData || []);
+      
+      if (childrenData && childrenData.length > 0) {
+        setSelectedChild(childrenData[0]);
+        setShowChildSelector(false);
+      }
+    } catch (error) {
+      console.error('Error loading children:', error);
+    }
+  };
+
+  const handleChildSelect = (child) => {
+    setSelectedChild(child);
+    setShowChildSelector(false);
+  };
 
   const getAgeDescription = (age) => {
     if (age <= 6) return "Early Explorer";
     if (age <= 8) return "Curious Learner";
     if (age <= 10) return "Knowledge Seeker";
     return "Advanced Thinker";
-  };
-
-  const handleAgeSelect = (age) => {
-    setSelectedAge(age);
-    setShowAgeSelector(false);
   };
 
   const subjects = [
@@ -83,54 +149,92 @@ const SubjectsPage = () => {
   ];
 
   const handleSubjectClick = (subject) => {
-    if (!selectedAge) {
-      setShowAgeSelector(true);
+    if (!selectedChild) {
+      setShowChildSelector(true);
       return;
     }
     
     navigate(`/subjects/${subject.id}`, { 
       state: { 
-        child: getChildProfile()
+        child: selectedChild
       } 
     });
   };
 
-  // Age Selection Modal
-  if (showAgeSelector) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your learning dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Child Selection Modal
+  if (showChildSelector) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <span className="text-2xl">🎂</span>
+              <User className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">How old are you?</h2>
-            <p className="text-gray-600">This helps us create the perfect learning experience for you!</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Select a Child</h2>
+            <p className="text-gray-600">Choose which child will be learning today!</p>
           </div>
 
-          <div className="grid grid-cols-4 gap-3 mb-6">
-            {ages.map((age) => (
+          {children.length > 0 ? (
+            <div className="space-y-3 mb-6">
+              {children.map((child) => (
+                <button
+                  key={child.id}
+                  onClick={() => handleChildSelect(child)}
+                  className="w-full group relative bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-transparent hover:border-blue-300 rounded-xl p-4 transition-all duration-300 transform hover:scale-105 text-left"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      {child.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold text-gray-800">{child.name}</div>
+                      <div className="text-sm text-gray-600">
+                        Age {child.age} • {getAgeDescription(child.age)}
+                      </div>
+                      {child.grade_level && (
+                        <div className="text-xs text-gray-500">Grade {child.grade_level}</div>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Plus className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-600 mb-4">No children found in your account.</p>
               <button
-                key={age}
-                onClick={() => handleAgeSelect(age)}
-                className="group relative bg-gradient-to-br from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-2 border-transparent hover:border-blue-300 rounded-xl p-4 transition-all duration-300 transform hover:scale-105"
+                onClick={() => navigate('/dashboard')}
+                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
               >
-                <div className="text-2xl font-bold text-gray-800 mb-1">{age}</div>
-                <div className="text-xs text-gray-600">{getAgeDescription(age)}</div>
+                Add a Child Profile
               </button>
-            ))}
-          </div>
+            </div>
+          )}
 
           <div className="text-center">
             <p className="text-sm text-gray-500 mb-4">
-              Don't worry, you can change this later!
+              You can switch between children anytime!
             </p>
-            {selectedAge && (
+            {selectedChild && (
               <button
-                onClick={() => setShowAgeSelector(false)}
+                onClick={() => setShowChildSelector(false)}
                 className="text-blue-600 hover:text-blue-800 text-sm font-medium"
               >
-                Skip for now
+                Continue with {selectedChild.name}
               </button>
             )}
           </div>
@@ -146,19 +250,23 @@ const SubjectsPage = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
-              <div className="text-4xl">{getChildProfile().avatar}</div>
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                {selectedChild?.name?.charAt(0).toUpperCase() || '?'}
+              </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-800">Learning Subjects</h1>
-                <p className="text-gray-600">Choose a subject to start your learning adventure!</p>
+                <p className="text-gray-600">
+                  {selectedChild ? `${selectedChild.name}'s learning adventure awaits!` : 'Choose a subject to start learning!'}
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              {selectedAge && (
+              {selectedChild && (
                 <div className="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-2">
-                  <span>🎂</span>
-                  <span>Age {selectedAge}</span>
+                  <User className="w-4 h-4" />
+                  <span>{selectedChild.name} (Age {selectedChild.age})</span>
                   <button
-                    onClick={() => setShowAgeSelector(true)}
+                    onClick={() => setShowChildSelector(true)}
                     className="ml-2 text-blue-600 hover:text-blue-800 text-xs underline"
                   >
                     Change
@@ -179,9 +287,11 @@ const SubjectsPage = () => {
           <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Ready to learn:</p>
+                <p className="text-sm text-gray-600">
+                  {selectedChild ? `${selectedChild.name} is ready to learn:` : 'Ready to learn:'}
+                </p>
                 <p className="text-lg font-bold text-gray-800">
-                  {selectedAge ? `${getAgeDescription(selectedAge)} Level` : 'Core Subjects'}
+                  {selectedChild ? `${getAgeDescription(selectedChild.age)} Level` : 'Core Subjects'}
                 </p>
               </div>
               <div className="text-right">
@@ -300,7 +410,7 @@ const SubjectsPage = () => {
 
       {/* AI Tutor Chat Modal */}
       <AITutorChat
-        childProfile={getChildProfile()}
+        childProfile={selectedChild}
         isOpen={showAIChat}
         onClose={() => setShowAIChat(false)}
       />

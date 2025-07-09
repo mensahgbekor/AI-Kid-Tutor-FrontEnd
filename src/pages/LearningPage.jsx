@@ -58,7 +58,8 @@ const LearningPage = () => {
   const { questions, loading: quizLoading, generateQuiz } = useAIQuiz();
 
   useEffect(() => {
-    if (!subject || !subtopic || !child) {
+    if (!subject || !subtopic || !child || !child.id) {
+      console.error('Missing required data:', { subject, subtopic, child });
       navigate('/subjects');
       return;
     }
@@ -69,6 +70,13 @@ const LearningPage = () => {
   const initializeLearning = async () => {
     try {
       setLoading(true);
+      
+      // Validate child profile has a valid database ID
+      if (!child || !child.id) {
+        console.error('Invalid child profile:', child);
+        navigate('/subjects');
+        return;
+      }
       
       // Create learning session
       await createLearningSession();
@@ -85,6 +93,11 @@ const LearningPage = () => {
 
   const createLearningSession = async () => {
     try {
+      // Double-check child ID exists
+      if (!child || !child.id) {
+        throw new Error('Child profile is missing or invalid');
+      }
+
       const sessionData = {
         child_id: child.id,
         session_type: 'lesson',
@@ -363,7 +376,21 @@ const LearningPage = () => {
   }
 
   if (!subject || !subtopic || !child) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <p>Missing required information. Please select a child and subject.</p>
+          </div>
+          <button
+            onClick={() => navigate('/subjects')}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Back to Subjects
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
