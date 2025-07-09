@@ -21,7 +21,6 @@ import { subjects } from '../data/subjects';
 const LearningPage = () => {
   const { subjectId } = useParams();
   const location = useLocation();
-  const { subjectId } = useParams();
   const navigate = useNavigate();
   
   const { child } = location.state || {};

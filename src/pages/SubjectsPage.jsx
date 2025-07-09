@@ -16,7 +16,6 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { User, Clock, BookOpen, Star, Trophy, Play } from 'lucide-react';
 import { subjects } from '../data/subjects';
 import AITutorChat from '../components/AITutorChat';
 
