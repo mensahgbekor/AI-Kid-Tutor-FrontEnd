@@ -15,6 +15,7 @@ const Dashboard = () => {
       const token = localStorage.getItem('token');
       const userEmail = localStorage.getItem('userEmail');
       const userName = localStorage.getItem('userName');
+      const userId = localStorage.getItem('userId');
       
       if (!token || !userEmail) {
         window.location.href = '/login';
@@ -22,7 +23,7 @@ const Dashboard = () => {
       }
       
       const userData = {
-        id: userEmail,
+        id: userId || userEmail, // Use UUID if available, fallback to email
         name: userName || userEmail.split('@')[0],
         email: userEmail,
         level: 'Beginner',

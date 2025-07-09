@@ -42,6 +42,7 @@ const AnalyticsPage = () => {
       // Get user info from localStorage
       const userEmail = localStorage.getItem('userEmail');
       const userName = localStorage.getItem('userName');
+      const userId = localStorage.getItem('userId');
       
       if (!userEmail) {
         throw new Error('User email not found');
@@ -49,7 +50,7 @@ const AnalyticsPage = () => {
 
       // Create user object
       const userData = {
-        id: userEmail,
+        id: userId || userEmail, // Use UUID if available, fallback to email
         email: userEmail,
         name: userName || userEmail.split('@')[0]
       };

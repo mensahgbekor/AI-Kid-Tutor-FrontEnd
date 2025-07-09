@@ -43,6 +43,7 @@ const SubjectsPage = () => {
       // Get user info from localStorage (set during MongoDB login)
       const userEmail = localStorage.getItem('userEmail');
       const userName = localStorage.getItem('userName');
+      const userId = localStorage.getItem('userId');
       
       if (!userEmail) {
         console.log('No user email found, redirecting to login');
@@ -53,7 +54,7 @@ const SubjectsPage = () => {
       
       // Create user object from localStorage data
       const userData = {
-        id: userEmail, // Use email as ID since it's unique
+        id: userId || userEmail, // Use UUID if available, fallback to email
         email: userEmail,
         name: userName || userEmail.split('@')[0], // Fallback to email prefix if no name
         age: 8 // Default age, this should come from user profile in real implementation

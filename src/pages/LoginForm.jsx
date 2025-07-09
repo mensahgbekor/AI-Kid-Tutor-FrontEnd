@@ -55,6 +55,12 @@ const LoginForm = () => {
       localStorage.setItem("token", data.token)
       localStorage.setItem("userEmail", form.email)
       localStorage.setItem("userName", data.name || data.user?.name || '')
+      // Store the actual user UUID if available
+      if (data.user?.id) {
+        localStorage.setItem("userId", data.user.id)
+      } else if (data.id) {
+        localStorage.setItem("userId", data.id)
+      }
       setMessage({ text: "Login successful! Redirecting...", type: "success" })
       
       setTimeout(() => {
