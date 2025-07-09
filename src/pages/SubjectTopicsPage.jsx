@@ -10,10 +10,12 @@ import {
   Star,
   Trophy,
   Target,
-  ChevronRight
+  ChevronRight,
+  CheckCircle
 } from 'lucide-react';
 import { subjects } from '../data/subjects';
 import AITutorChat from '../components/AITutorChat';
+import { subjectProgressService } from '../services/supabase';
 
 const SubjectTopicsPage = () => {
   const { subjectId } = useParams();
@@ -22,7 +24,8 @@ const SubjectTopicsPage = () => {
   
   const { child } = location.state || {};
   const [showAIChat, setShowAIChat] = useState(false);
-  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [topicProgress, setTopicProgress] = useState({});
+  const [loading, setLoading] = useState(true);
   
   // Get subject from data
   const subject = subjects.find(s => s.id === subjectId);
@@ -32,7 +35,41 @@ const SubjectTopicsPage = () => {
       navigate('/subjects');
       return;
     }
+    
+    if (child) {
+      loadTopicProgress();
+    }
   }, [subject, navigate]);
+
+  const loadTopicProgress = async () => {
+    try {
+      setLoading(true);
+      const progressData = {};
+      
+      // Load progress for each subtopic
+      for (const subtopic of subject.subtopics) {
+        try {
+          const progress = await subjectProgressService.getSubjectProgress(
+            child.id, 
+            subject.id, 
+            subtopic.id
+          );
+          if (progress) {
+            progressData[subtopic.id] = progress;
+          }
+        } catch (error) {
+          // Progress doesn't exist yet, that's okay
+          console.log(`No progress found for ${subtopic.id}`);
+        }
+      }
+      
+      setTopicProgress(progressData);
+    } catch (error) {
+      console.error('Error loading topic progress:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleTopicClick = (subtopic) => {
     navigate(`/learning/${subjectId}/${subtopic.id}`, { 
@@ -57,12 +94,41 @@ const SubjectTopicsPage = () => {
     }
   };
 
+  const getTopicProgress = (subtopicId) => {
+    return topicProgress[subtopicId] || null;
+  };
+
+  const getProgressColor = (progress) => {
+    if (!progress) return 'text-gray-600';
+    if (progress.completion_percentage === 100) return 'text-green-600';
+    if (progress.completion_percentage > 0) return 'text-blue-600';
+    return 'text-gray-600';
+  };
+
+  const getProgressText = (progress) => {
+    if (!progress) return 'Not started';
+    if (progress.completion_percentage === 100) return 'Completed';
+    if (progress.completion_percentage > 0) return `${progress.completion_percentage}% complete`;
+    return 'Not started';
+  };
+
   if (!subject || !child) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your progress...</p>
         </div>
       </div>
     );
@@ -131,88 +197,127 @@ const SubjectTopicsPage = () => {
 
         {/* Topics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {subject.subtopics.map((subtopic, index) => (
-            <motion.div
-              key={subtopic.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
-              onClick={() => handleTopicClick(subtopic)}
-            >
-              {/* Topic Header */}
-              <div className={`bg-gradient-to-r ${subject.color} p-6 text-white relative`}>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-4xl">{subtopic.icon}</span>
-                  <div className="bg-white bg-opacity-20 rounded-full px-3 py-1">
-                    <span className="text-sm font-medium">{subtopic.difficulty}</span>
+          {subject.subtopics.map((subtopic, index) => {
+            const progress = getTopicProgress(subtopic.id);
+            
+            return (
+              <motion.div
+                key={subtopic.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
+                onClick={() => handleTopicClick(subtopic)}
+              >
+                {/* Topic Header */}
+                <div className={`bg-gradient-to-r ${subject.color} p-6 text-white relative`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-4xl">{subtopic.icon}</span>
+                    <div className="bg-white bg-opacity-20 rounded-full px-3 py-1">
+                      <span className="text-sm font-medium">{subtopic.difficulty}</span>
+                    </div>
                   </div>
-                </div>
-                <h3 className="text-xl font-bold mb-2">{subtopic.title}</h3>
-                <p className="text-white text-opacity-90 text-sm">{subtopic.description}</p>
-              </div>
-
-              {/* Topic Content */}
-              <div className="p-6">
-                {/* Topic Info */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-4 text-sm text-gray-600">
-                    <span className="flex items-center space-x-1">
-                      <Clock size={14} />
-                      <span>{subtopic.estimatedTime}</span>
-                    </span>
-                    <span className="flex items-center space-x-1">
-                      <BookOpen size={14} />
-                      <span>{subtopic.lessons.length} lessons</span>
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Star className="text-yellow-400 fill-current" size={14} />
-                    <span className="text-sm font-medium">4.8</span>
-                  </div>
+                  <h3 className="text-xl font-bold mb-2">{subtopic.title}</h3>
+                  <p className="text-white text-opacity-90 text-sm">{subtopic.description}</p>
                 </div>
 
-                {/* Difficulty Badge */}
-                <div className="mb-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(subtopic.difficulty)}`}>
-                    {subtopic.difficulty} Level
-                  </span>
-                </div>
-
-                {/* Lessons Preview */}
-                <div className="mb-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Lessons include:</p>
-                  <div className="space-y-1">
-                    {subtopic.lessons.slice(0, 3).map((lesson, lessonIndex) => (
-                      <div key={lessonIndex} className="flex items-center space-x-2 text-sm text-gray-600">
-                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                        <span>{lesson}</span>
+                {/* Topic Content */}
+                <div className="p-6">
+                  {/* Progress Bar */}
+                  {progress && progress.completion_percentage > 0 && (
+                    <div className="mb-4">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-gray-600">Progress</span>
+                        <span className={`font-medium ${getProgressColor(progress)}`}>
+                          {progress.completion_percentage}%
+                        </span>
                       </div>
-                    ))}
-                    {subtopic.lessons.length > 3 && (
-                      <div className="flex items-center space-x-2 text-sm text-gray-500">
-                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                        <span>+{subtopic.lessons.length - 3} more lessons</span>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`bg-gradient-to-r ${subject.color} h-2 rounded-full transition-all duration-500`}
+                          style={{ width: `${progress.completion_percentage}%` }}
+                        ></div>
                       </div>
-                    )}
+                    </div>
+                  )}
+                  
+                  {/* Topic Info */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <span className="flex items-center space-x-1">
+                        <Clock size={14} />
+                        <span>{subtopic.estimatedTime}</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        <BookOpen size={14} />
+                        <span>{subtopic.lessons.length} lessons</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Star className="text-yellow-400 fill-current" size={14} />
+                      <span className="text-sm font-medium">4.8</span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Action Button */}
-                <button className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-600 hover:to-purple-600 transition-all duration-300 flex items-center justify-center space-x-2">
-                  <Play size={16} />
-                  <span>Start Topic</span>
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </motion.div>
-          ))}
+                  {/* Difficulty Badge */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(subtopic.difficulty)}`}>
+                        {subtopic.difficulty} Level
+                      </span>
+                      <span className={`text-sm font-medium ${getProgressColor(progress)}`}>
+                        {getProgressText(progress)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Lessons Preview */}
+                  <div className="mb-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Lessons include:</p>
+                    <div className="space-y-1">
+                      {subtopic.lessons.slice(0, 3).map((lesson, lessonIndex) => (
+                        <div key={lessonIndex} className="flex items-center space-x-2 text-sm text-gray-600">
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                          <span>{lesson}</span>
+                        </div>
+                      ))}
+                      {subtopic.lessons.length > 3 && (
+                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                          <span>+{subtopic.lessons.length - 3} more lessons</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <button className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center space-x-2 ${
+                    progress && progress.completion_percentage === 100
+                      ? 'bg-green-500 text-white hover:bg-green-600'
+                      : progress && progress.completion_percentage > 0
+                        ? 'bg-blue-500 text-white hover:bg-blue-600'
+                        : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
+                  }`}>
+                    <Play size={16} />
+                    <span>
+                      {progress && progress.completion_percentage === 100
+                        ? 'Review Topic'
+                        : progress && progress.completion_percentage > 0
+                          ? 'Continue Topic'
+                          : 'Start Topic'}
+                    </span>
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Progress Overview */}
         <div className="bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-lg font-bold text-gray-800 mb-4">Your {subject.title} Journey</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="bg-gradient-to-r from-blue-100 to-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -245,6 +350,17 @@ const SubjectTopicsPage = () => {
                   </p>
                 </div>
                 <Clock className="text-purple-600" size={32} />
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-pink-100 to-pink-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-pink-700">Completed Topics</p>
+                  <p className="text-2xl font-bold text-pink-800">
+                    {Object.values(topicProgress).filter(p => p.completion_percentage === 100).length}
+                  </p>
+                </div>
+                <CheckCircle className="text-pink-600" size={32} />
               </div>
             </div>
             <div className="bg-gradient-to-r from-yellow-100 to-yellow-200 rounded-lg p-4">
