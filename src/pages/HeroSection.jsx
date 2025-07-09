@@ -26,6 +26,10 @@ const HeroSection = () => {
     }
   };
 
+  const handleExploreSubjects = () => {
+    // Always go to subjects page - let SubjectsPage handle auth
+    window.location.href = '/subjects';
+  };
   return (
     <section id="home" className="min-h-screen relative overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
       {/* Floating Elements */}
@@ -67,11 +71,11 @@ const HeroSection = () => {
                 Start Free Trial
               </button>
               <a
-                href="/subjects"
+                onClick={handleExploreSubjects}
                 className="border-2 border-gray-300 text-gray-700 px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:border-pink-500 hover:text-pink-500 transition-all duration-300"
               >
                 Explore Subjects
-              </a>
+              </button>
             </div>
             <div className="mt-8 sm:mt-10 lg:mt-12 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 lg:space-x-8">
               <div className="text-center">
