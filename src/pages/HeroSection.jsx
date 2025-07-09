@@ -75,7 +75,7 @@ const HeroSection = () => {
                 className="border-2 border-gray-300 text-gray-700 px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:border-pink-500 hover:text-pink-500 transition-all duration-300"
               >
                 Explore Subjects
-              </button>
+              </a>
             </div>
             <div className="mt-8 sm:mt-10 lg:mt-12 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 lg:space-x-8">
               <div className="text-center">
